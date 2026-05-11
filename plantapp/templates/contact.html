@@ -1,0 +1,573 @@
+{% extends "base.html"%}
+{% load static %}
+{% block container%}
+  
+  <style>
+    /* PAGE HEADER */
+    .page-header {
+      background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
+      padding: 72px 6% 60px;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    .page-header::before {
+      content: '📬';
+      position: absolute;
+      right: 5%; top: 50%;
+      transform: translateY(-50%);
+      font-size: 140px;
+      opacity: 0.08;
+      pointer-events: none;
+    }
+    .page-header h1 {
+      font-family: 'Playfair Display', serif;
+      color: #fff;
+      font-size: clamp(32px, 5vw, 52px);
+      margin-bottom: 14px;
+    }
+    .page-header h1 span { color: var(--green-pale); }
+    .page-header p { color: var(--green-pale); font-size: 16px; opacity: 0.85; max-width: 520px; margin: 0 auto; }
+
+    /* CONTACT MAIN */
+    .contact-main {
+      padding: 80px 6%;
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+      align-items: start;
+    }
+
+    /* LEFT — Info */
+    .contact-info h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(22px, 2.5vw, 32px);
+      color: var(--green-dark);
+      margin-bottom: 12px;
+    }
+    .contact-info h2 span { color: var(--green-light); }
+    .contact-info > p {
+      font-size: 15px;
+      color: var(--text-mid);
+      line-height: 1.8;
+      margin-bottom: 36px;
+    }
+
+    .info-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      background: var(--green-bg);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 22px;
+      margin-bottom: 16px;
+      transition: all 0.25s;
+    }
+    .info-card:hover {
+      border-color: var(--green-light);
+      box-shadow: 0 8px 24px rgba(26,60,46,0.1);
+      transform: translateX(4px);
+    }
+    .info-card .icon {
+      width: 46px; height: 46px;
+      background: var(--green-dark);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .info-card .text .title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .info-card .text .value {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--green-dark);
+    }
+    .info-card .text .sub {
+      font-size: 12.5px;
+      color: var(--text-light);
+      margin-top: 2px;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+    .social-btn {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--green-bg);
+      border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      color: var(--green-dark);
+      text-decoration: none;
+      transition: all 0.25s;
+    }
+    .social-btn:hover {
+      background: var(--green-dark);
+      color: #fff;
+      border-color: var(--green-dark);
+      transform: translateY(-3px);
+    }
+
+    /* RIGHT — Form */
+    .contact-form-wrap {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      padding: 44px 40px;
+      box-shadow: 0 8px 32px rgba(26,60,46,0.08);
+    }
+    .contact-form-wrap h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--green-dark);
+      margin-bottom: 6px;
+    }
+    .contact-form-wrap > p {
+      font-size: 14px;
+      color: var(--text-light);
+      margin-bottom: 28px;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-mid);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--text-dark);
+      background: var(--green-bg);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-sizing: border-box;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--green-light);
+      box-shadow: 0 0 0 3px rgba(74,163,91,0.12);
+      background: var(--white);
+    }
+    .form-group textarea { resize: vertical; min-height: 130px; }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--green-dark);
+      color: #fff;
+      border: none;
+      padding: 16px 28px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.25s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .btn-submit:hover { background: var(--green-mid); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,60,46,0.25); }
+
+    .success-msg {
+      display: none;
+      background: #d4edda;
+      border: 1.5px solid #b8dfc2;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 14px;
+      color: #155724;
+      margin-bottom: 20px;
+      align-items: center;
+      gap: 10px;
+    }
+    .success-msg.show { display: flex; }
+
+    /* FAQ */
+    .faq-section {
+      padding: 80px 6%;
+      background: var(--green-bg);
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .section-tag {
+      display: inline-block;
+      background: var(--green-bg2);
+      color: var(--green-mid);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    .section-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(22px, 3vw, 34px);
+      color: var(--green-dark);
+      margin-bottom: 10px;
+    }
+    .section-header h2 span { color: var(--green-light); }
+
+    .faq-list { max-width: 750px; margin: 0 auto; }
+    .faq-item {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      transition: border-color 0.25s;
+    }
+    .faq-item.open { border-color: var(--green-light); }
+    .faq-question {
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--green-dark);
+      user-select: none;
+    }
+    .faq-question i {
+      color: var(--green-light);
+      transition: transform 0.25s;
+      font-size: 13px;
+    }
+    .faq-item.open .faq-question i { transform: rotate(180deg); }
+    .faq-answer {
+      display: none;
+      padding: 0 24px 20px;
+      font-size: 14px;
+      color: var(--text-mid);
+      line-height: 1.75;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+    .faq-item.open .faq-answer { display: block; }
+
+    /* MAP STRIP */
+    .map-strip {
+      padding: 0 6% 80px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .map-strip h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--green-dark);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .map-placeholder {
+      background: var(--green-bg);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      height: 280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-light);
+      font-size: 15px;
+    }
+    .map-placeholder .map-icon { font-size: 52px; }
+
+    @media (max-width: 900px) {
+      .contact-main { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .contact-form-wrap { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  
+  <div class="mobile-nav" id="mobileNav">
+    <a href="{% url 'index' %}">Home</a>
+    <a href="{% url 'products' %}">Shop</a>
+    <a href="{% url 'category' %}">Categories</a>
+    <a href="{% url 'about' %}">About</a>
+    <a href="{% url 'contact' %}">Contact</a>
+  </div>
+
+
+  <!-- PAGE HEADER -->
+<div class="page-header">
+  <h1>Contact <span>Us</span></h1>
+  <p>Have any questions? We’re here for you! Talk directly with our plant experts. 🌿</p>
+</div>
+
+<!-- MAIN CONTACT -->
+<div class="contact-main">
+
+  <!-- LEFT INFO -->
+  <div class="contact-info">
+    <h2>Get in <span>Touch</span></h2>
+    <p>Whether you need help with plant selection, care tips, order status, or anything else — we’re always here to help!</p>
+
+    <div class="info-card">
+      <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
+      <div class="text">
+        <div class="title">Address</div>
+        <div class="value">GreenShop Nursery</div>
+        <div class="sub">123, Plant Street, Ahmedabad, Gujarat – 380001</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="icon"><i class="fas fa-phone-alt"></i></div>
+      <div class="text">
+        <div class="title">Phone</div>
+        <div class="value">+91 98765 43210</div>
+        <div class="sub">Mon–Sat, 9 AM – 7 PM</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="icon"><i class="fas fa-envelope"></i></div>
+      <div class="text">
+        <div class="title">Email</div>
+        <div class="value">hello@greenshop.in</div>
+        <div class="sub">You’ll receive a reply within 24 hours</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="icon"><i class="fas fa-clock"></i></div>
+      <div class="text">
+        <div class="title">Working Hours</div>
+        <div class="value">Mon – Sat: 9 AM – 7 PM</div>
+        <div class="sub">Sunday: 10 AM – 5 PM</div>
+      </div>
+    </div>
+
+    <div class="social-links">
+      <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+      <a href="#" class="social-btn"><i class="fab fa-facebook-f"></i></a>
+      <a href="#" class="social-btn"><i class="fab fa-whatsapp"></i></a>
+      <a href="#" class="social-btn"><i class="fab fa-youtube"></i></a>
+      <a href="#" class="social-btn"><i class="fab fa-twitter"></i></a>
+    </div>
+  </div>
+
+  <!-- RIGHT FORM -->
+  <div class="contact-form-wrap">
+    <h3>Send a Message 💬</h3>
+    <p>Fill out the form — we’ll get back to you soon!</p>
+
+    <div class="success-msg" id="successMsg">
+      <i class="fas fa-check-circle" style="font-size:20px;"></i>
+      <span>We received your message! We’ll reply within 24 hours. 🌿</span>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" id="fname" placeholder="Rahul"/>
+      </div>
+
+      <div class="form-group">
+        <label>Last Name</label>
+        <input type="text" id="lname" placeholder="Sharma"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="rahul@example.com"/>
+    </div>
+
+    <div class="form-group">
+      <label>Phone Number</label>
+      <input type="tel" id="phone" placeholder="+91 98765 43210"/>
+    </div>
+
+    <div class="form-group">
+      <label>What would you like to talk about?</label>
+      <select id="subject">
+        <option value="">-- Select --</option>
+        <option>Plant Selection Help</option>
+        <option>Order Status</option>
+        <option>Plant Care Tips</option>
+        <option>Return / Refund</option>
+        <option>Delivery Issue</option>
+        <option>Bulk Order Enquiry</option>
+        <option>Something Else</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Your Message</label>
+      <textarea id="message" placeholder="Write your message here..."></textarea>
+    </div>
+
+    <button class="btn-submit" onclick="submitForm()">
+      <i class="fas fa-paper-plane"></i> Send Message
+    </button>
+  </div>
+</div>
+
+<!-- MAP -->
+<div class="map-strip">
+  <h3>Where We Are 📍</h3>
+
+  <div class="map-placeholder">
+    <div class="map-icon">🗺️</div>
+    <div>123, Plant Street, Ahmedabad, Gujarat</div>
+
+    <a href="https://maps.google.com" target="_blank"
+       style="color:var(--green-mid);font-weight:600;font-size:14px;">
+      View on Google Maps →
+    </a>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="faq-section">
+  <div class="section-header">
+    <div class="section-tag">FAQ</div>
+    <h2>Frequently Asked <span>Questions</span></h2>
+  </div>
+
+  <div class="faq-list">
+
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">
+        How many days does delivery take?
+        <i class="fas fa-chevron-down"></i>
+      </div>
+
+      <div class="faq-answer">
+        We usually deliver within 3–5 working days. In metro cities, delivery may arrive within 2–3 days. You’ll receive a tracking link as soon as your order is placed.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">
+        What if the plant arrives damaged?
+        <i class="fas fa-chevron-down"></i>
+      </div>
+
+      <div class="faq-answer">
+        No worries! Contact us within 48 hours of delivery and share a photo of the plant. We’ll provide a free replacement or full refund.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">
+        Are bulk orders available?
+        <i class="fas fa-chevron-down"></i>
+      </div>
+
+      <div class="faq-answer">
+        Yes, absolutely! We accept bulk orders for events, offices, and gifts. Contact us for special bulk discounts.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">
+        How do I take care of my plants?
+        <i class="fas fa-chevron-down"></i>
+      </div>
+
+      <div class="faq-answer">
+        Every plant comes with a detailed care card. You’ll also find watering, sunlight, and temperature details on the product page. If you still need help, we’re always available!
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">
+        Is COD (Cash on Delivery) available?
+        <i class="fas fa-chevron-down"></i>
+      </div>
+
+      <div class="faq-answer">
+        Yes! We accept COD, UPI, credit/debit cards, and net banking. Choose the payment method that’s most convenient for you.
+      </div>
+    </div>
+
+  </div>
+</div>
+  <button class="scroll-top" id="scrollTop"><i class="fas fa-arrow-up"></i></button>
+  <script src="{% static 'js/main.js' %}"></script>
+  <script>
+    document.getElementById('hamburger')?.addEventListener('click', () => {
+      document.getElementById('mobileNav')?.classList.toggle('open');
+    });
+    const scrollTopBtn = document.getElementById('scrollTop');
+    window.addEventListener('scroll', () => {
+      scrollTopBtn?.classList.toggle('visible', window.scrollY > 400);
+    });
+    scrollTopBtn?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    document.getElementById('profileBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('profileDropdown')?.classList.toggle('show');
+    });
+    document.addEventListener('click', () => {
+      document.getElementById('profileDropdown')?.classList.remove('show');
+    });
+
+    function submitForm() {
+      const fname = document.getElementById('fname').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const message = document.getElementById('message').value.trim();
+
+      if (!fname || !email || !message) {
+        alert('Please fill in Name, Email, and Message!');
+        return;
+      }
+      document.getElementById('successMsg').classList.add('show');
+      // Fields clear karo
+      ['fname','lname','email','phone','message'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('subject').selectedIndex = 0;
+      window.scrollTo({ top: document.querySelector('.contact-form-wrap').offsetTop - 100, behavior: 'smooth' });
+    }
+
+    function toggleFaq(el) {
+      const item = el.parentElement;
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    }
+  </script>
+</body>
+</html>
+
+{% endblock %}

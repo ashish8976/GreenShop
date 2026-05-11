@@ -1,0 +1,293 @@
+{% extends "base.html"%}
+{% load static %}
+{% block container %}
+  
+  <style>
+    .page-hero{background:linear-gradient(135deg,var(--green-dark),var(--green-mid));padding:50px 6%;color:var(--white);}
+    .page-hero h1{font-size:clamp(28px,4vw,44px);font-weight:900;margin-bottom:8px;}
+    .breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--green-pale);opacity:0.8;}
+    .breadcrumb a{color:var(--green-pale);}
+    .breadcrumb i{font-size:10px;}
+
+    /* Steps */
+    .checkout-steps{display:flex;justify-content:center;align-items:center;gap:0;padding:32px 6%;background:var(--white);border-bottom:1.5px solid var(--border);}
+    .step{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--text-light);}
+    .step.active{color:var(--green-dark);}
+    .step.done{color:var(--green-light);}
+    .step-num{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
+    .step.active .step-num{background:var(--green-dark);border-color:var(--green-dark);color:var(--white);}
+    .step.done .step-num{background:var(--green-light);border-color:var(--green-light);color:var(--white);}
+    .step-line{flex:1;height:2px;background:var(--border);margin:0 16px;max-width:80px;}
+    .step-line.done{background:var(--green-light);}
+
+    .checkout-layout{padding:48px 6%;display:grid;grid-template-columns:1fr 400px;gap:40px;align-items:start;}
+    @media(max-width:900px){.checkout-layout{grid-template-columns:1fr;}}
+
+    .checkout-section{background:var(--white);border-radius:var(--radius);border:1.5px solid var(--border);padding:28px;margin-bottom:24px;}
+    .section-head{display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:16px;border-bottom:1.5px solid var(--border);}
+    .section-num{width:30px;height:30px;border-radius:50%;background:var(--green-dark);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
+    .section-head h3{font-size:18px;color:var(--green-dark);margin:0;}
+
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .form-group{margin-bottom:16px;}
+    .form-group label{display:block;font-size:12px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+    .form-group input,.form-group select,.form-group textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;color:var(--text-dark);background:var(--white);transition:border-color var(--transition);}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green-light);}
+    .form-group textarea{resize:vertical;min-height:80px;}
+
+    .payment-options{display:flex;flex-direction:column;gap:12px;}
+    .payment-opt{border:2px solid var(--border);border-radius:12px;padding:16px 20px;cursor:pointer;transition:all var(--transition);display:flex;align-items:center;gap:14px;}
+    .payment-opt:hover{border-color:var(--green-light);}
+    .payment-opt.selected{border-color:var(--green-dark);background:var(--green-bg);}
+    .payment-opt input[type="radio"]{accent-color:var(--green-dark);width:16px;height:16px;}
+    .payment-opt-label{font-weight:700;color:var(--green-dark);font-size:14px;}
+    .payment-opt-sub{font-size:12px;color:var(--text-light);}
+    .payment-icon-group{margin-left:auto;display:flex;gap:6px;}
+    .pay-icon-sm{font-size:10px;font-weight:700;background:var(--green-bg);border:1px solid var(--border);border-radius:4px;padding:3px 7px;color:var(--text-mid);}
+
+    .upi-input{margin-top:14px;display:none;}
+    .upi-input.show{display:block;}
+    .upi-apps{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;}
+    .upi-app{padding:8px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text-mid);background:var(--white);transition:all var(--transition);}
+    .upi-app:hover{border-color:var(--green-light);color:var(--green-dark);}
+
+    /* Order Summary Panel */
+    .order-panel{background:var(--white);border-radius:var(--radius);border:1.5px solid var(--border);padding:28px;position:sticky;top:90px;}
+    .panel-title{font-size:18px;font-weight:800;color:var(--green-dark);margin-bottom:20px;padding-bottom:14px;border-bottom:1.5px solid var(--border);}
+    .order-items{display:flex;flex-direction:column;gap:14px;margin-bottom:20px;padding-bottom:20px;border-bottom:1.5px solid var(--border);}
+    .order-item{display:flex;align-items:center;gap:12px;}
+    .order-item-img{width:52px;height:52px;background:var(--green-bg2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;position:relative;}
+    .qty-badge{position:absolute;top:-6px;right:-6px;background:var(--green-dark);color:var(--white);font-size:10px;font-weight:800;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+    .order-item-name{flex:1;font-size:13px;font-weight:700;color:var(--green-dark);}
+    .order-item-price{font-size:13px;font-weight:800;color:var(--green-dark);}
+    .totals-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:var(--text-mid);}
+    .totals-row.final{font-size:18px;font-weight:800;color:var(--green-dark);border-top:2px solid var(--green-dark);margin-top:8px;padding-top:14px;}
+    .place-order-btn{width:100%;background:linear-gradient(135deg,var(--green-dark),var(--green-mid));color:var(--white);border:none;padding:18px;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:20px;display:flex;align-items:center;justify-content:center;gap:10px;transition:all var(--transition);}
+    .place-order-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(26,60,46,0.3);}
+    .terms-note{font-size:12px;color:var(--text-light);text-align:center;margin-top:12px;line-height:1.6;}
+    .terms-note a{color:var(--green-mid);}
+    .discount-row{color:var(--green-light);font-weight:700;}
+  </style>
+</head>
+<body>
+ 
+  <div class="page-hero">
+    <h1><i class="fas fa-lock" style="font-size:28px;margin-right:10px;"></i>Secure Checkout</h1>
+    <div class="breadcrumb">
+      <a href="index.html">Home</a><i class="fas fa-chevron-right"></i>
+      <a href="cart.html">Cart</a><i class="fas fa-chevron-right"></i>
+      <span>Checkout</span>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="checkout-steps">
+    <div class="step done">
+      <div class="step-num"><i class="fas fa-check" style="font-size:12px;"></i></div>
+      <span>Cart</span>
+    </div>
+    <div class="step-line done"></div>
+    <div class="step active">
+      <div class="step-num">2</div>
+      <span>Checkout</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <span>Confirmation</span>
+    </div>
+  </div>
+
+  <div class="checkout-layout">
+    <div>
+      <!-- Contact Info -->
+      <div class="checkout-section">
+        <div class="section-head">
+          <div class="section-num">1</div>
+          <h3>Contact Information</h3>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>First Name</label><input type="text" placeholder="Priya"/></div>
+          <div class="form-group"><label>Last Name</label><input type="text" placeholder="Sharma"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Email Address</label><input type="email" placeholder="priya@example.com"/></div>
+          <div class="form-group"><label>Phone Number</label><input type="tel" placeholder="+91 98765 43210"/></div>
+        </div>
+      </div>
+
+      <!-- Shipping Address -->
+      <div class="checkout-section">
+        <div class="section-head">
+          <div class="section-num">2</div>
+          <h3>Shipping Address</h3>
+        </div>
+        <div class="form-group"><label>Full Address / Flat No.</label><input type="text" placeholder="House no, Street name, Area"/></div>
+        <div class="form-row">
+          <div class="form-group"><label>City</label><input type="text" placeholder="Ahmedabad"/></div>
+          <div class="form-group"><label>State</label>
+            <select>
+              <option>Gujarat</option><option>Maharashtra</option><option>Karnataka</option>
+              <option>Delhi</option><option>Tamil Nadu</option><option>Rajasthan</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>PIN Code</label><input type="text" placeholder="380015"/></div>
+          <div class="form-group"><label>Landmark (Optional)</label><input type="text" placeholder="Near Metro Station"/></div>
+        </div>
+        <div class="form-group">
+          <label>Address Type</label>
+          <div style="display:flex;gap:10px;margin-top:4px;">
+            <button class="upi-app" style="border-color:var(--green-dark);color:var(--green-dark);">🏠 Home</button>
+            <button class="upi-app">🏢 Office</button>
+            <button class="upi-app">📍 Other</button>
+          </div>
+        </div>
+        <div class="form-group"><label>Delivery Instructions (Optional)</label><textarea placeholder="e.g., Leave at door, Call before delivery, etc."></textarea></div>
+      </div>
+
+      <!-- Delivery Slot -->
+      <div class="checkout-section">
+        <div class="section-head">
+          <div class="section-num">3</div>
+          <h3>Choose Delivery Slot</h3>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div class="payment-opt" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="font-weight:800;font-size:13px;color:var(--green-dark);">Today</div>
+            <div style="font-size:12px;color:var(--text-light);">6 PM – 9 PM</div>
+            <div style="font-size:11px;background:#e8f5ee;color:var(--green-mid);border-radius:6px;padding:2px 8px;font-weight:700;margin-top:4px;">Express</div>
+          </div>
+          <div class="payment-opt selected" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="font-weight:800;font-size:13px;color:var(--green-dark);">Tomorrow</div>
+            <div style="font-size:12px;color:var(--text-light);">10 AM – 2 PM</div>
+            <div style="font-size:11px;background:var(--green-bg);color:var(--green-mid);border-radius:6px;padding:2px 8px;font-weight:700;margin-top:4px;">Free</div>
+          </div>
+          <div class="payment-opt" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="font-weight:800;font-size:13px;color:var(--green-dark);">In 2 Days</div>
+            <div style="font-size:12px;color:var(--text-light);">Any Time</div>
+            <div style="font-size:11px;background:var(--green-bg);color:var(--green-mid);border-radius:6px;padding:2px 8px;font-weight:700;margin-top:4px;">Free</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment -->
+      <div class="checkout-section">
+        <div class="section-head">
+          <div class="section-num">4</div>
+          <h3>Payment Method</h3>
+        </div>
+        <div class="payment-options">
+          <div class="payment-opt selected" onclick="selectPayment(this,'upi')">
+            <input type="radio" name="payment" checked/>
+            <div>
+              <div class="payment-opt-label">UPI Payment</div>
+              <div class="payment-opt-sub">GPay, PhonePe, Paytm, BHIM</div>
+            </div>
+            <div class="payment-icon-group"><span class="pay-icon-sm">GPay</span><span class="pay-icon-sm">PhonePe</span></div>
+          </div>
+          <div id="upiInput" class="upi-input show">
+            <input type="text" placeholder="Enter UPI ID e.g. name@upi" style="border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;width:100%;margin-bottom:8px;"/>
+            <div class="upi-apps">
+              <button class="upi-app">GPay</button>
+              <button class="upi-app">PhonePe</button>
+              <button class="upi-app">Paytm</button>
+              <button class="upi-app">BHIM</button>
+            </div>
+          </div>
+
+          <div class="payment-opt" onclick="selectPayment(this,'card')">
+            <input type="radio" name="payment"/>
+            <div>
+              <div class="payment-opt-label">Credit / Debit Card</div>
+              <div class="payment-opt-sub">Visa, Mastercard, Rupay</div>
+            </div>
+            <div class="payment-icon-group"><span class="pay-icon-sm">Visa</span><span class="pay-icon-sm">MC</span></div>
+          </div>
+
+          <div class="payment-opt" onclick="selectPayment(this,'netbanking')">
+            <input type="radio" name="payment"/>
+            <div>
+              <div class="payment-opt-label">Net Banking</div>
+              <div class="payment-opt-sub">All major banks supported</div>
+            </div>
+            <div class="payment-icon-group"><span class="pay-icon-sm">SBI</span><span class="pay-icon-sm">HDFC</span></div>
+          </div>
+
+          <div class="payment-opt" onclick="selectPayment(this,'cod')">
+            <input type="radio" name="payment"/>
+            <div>
+              <div class="payment-opt-label">Cash on Delivery</div>
+              <div class="payment-opt-sub">Pay when your plants arrive</div>
+            </div>
+            <div class="payment-icon-group"><span class="pay-icon-sm">COD</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Panel -->
+    <div>
+      <div class="order-panel">
+        <div class="panel-title">Your Order (3 items)</div>
+        <div class="order-items">
+          <div class="order-item">
+            <div class="order-item-img">🌿<span class="qty-badge">2</span></div>
+            <div class="order-item-name">Monstera Deliciosa</div>
+            <div class="order-item-price">₹1,298</div>
+          </div>
+          <div class="order-item">
+            <div class="order-item-img">🌸<span class="qty-badge">1</span></div>
+            <div class="order-item-name">Peace Lily</div>
+            <div class="order-item-price">₹399</div>
+          </div>
+          <div class="order-item">
+            <div class="order-item-img">🪴<span class="qty-badge">1</span></div>
+            <div class="order-item-name">Snake Plant</div>
+            <div class="order-item-price">₹349</div>
+          </div>
+        </div>
+        <div class="totals-row"><span>Subtotal</span><span>₹2,046</span></div>
+        <div class="totals-row"><span>Shipping</span><span>₹99</span></div>
+        <div class="totals-row discount-row"><span>Coupon (GREEN10)</span><span>−₹205</span></div>
+        <div class="totals-row final"><span>Total</span><span>₹1,940</span></div>
+
+        <button class="place-order-btn" onclick="location.href='order-confirmation.html'">
+          <i class="fas fa-lock"></i> Place Order – ₹1,940
+        </button>
+        <div class="terms-note">By placing your order, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</div>
+
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;font-size:12px;color:var(--text-light);">
+          <i class="fas fa-undo" style="color:var(--green-light);"></i>
+          30-day return guarantee
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand"><span class="brand-name">Green<span style="color:var(--green-light)">Shop</span></span><p>Made with 🌿 in India.</p></div>
+      <div class="footer-col"><h5>Help</h5><ul><li><a href="contact.html">Contact Us</a></li><li><a href="order-tracking.html">Track Order</a></li></ul></div>
+      <div class="footer-col"><h5>Legal</h5><ul><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul></div>
+      <div class="footer-col"><h5>Contact</h5><div class="footer-contact"><div class="contact-item"><i class="fas fa-phone"></i><span>+91 98765 43210</span></div></div></div>
+    </div>
+    <div class="footer-bottom"><span>© 2025 GreenShop. All rights reserved.</span></div>
+  </footer>
+
+  <script src="{% static 'js/main.js' %}"></script>
+  <script>
+    function selectPayment(el, type) {
+      document.querySelectorAll('.payment-opt').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      el.querySelector('input').checked = true;
+      const upiDiv = document.getElementById('upiInput');
+      if(type === 'upi') upiDiv.classList.add('show');
+      else upiDiv.classList.remove('show');
+    }
+  </script>
+</body>
+</html>
+
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends "base.html"%}
+
+{% load static %}
+
+{% block container %}
+ 
+  <style>
+    .wishlist-section { padding: 60px 6%; min-height: 60vh; }
+    .wishlist-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:36px; flex-wrap:wrap; gap:16px; }
+    .wishlist-header h2 { font-family:'Playfair Display',serif; font-size:32px; color:var(--green-dark); }
+    .wishlist-header h2 span { color:var(--green-light); }
+    .clear-wishlist { background:none; border:1.5px solid var(--border); color:var(--text-mid); padding:10px 22px; border-radius:10px; cursor:pointer; font-size:14px; font-family:'DM Sans',sans-serif; transition:all var(--transition); }
+    .clear-wishlist:hover { border-color:#e63946; color:#e63946; }
+    .wishlist-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; }
+    .wishlist-card { background:var(--white); border-radius:var(--radius); border:1.5px solid var(--border); overflow:hidden; position:relative; transition:all var(--transition); }
+    .wishlist-card:hover { box-shadow:var(--shadow-lg); transform:translateY(-4px); }
+    .wishlist-img { background:var(--green-bg); height:180px; display:flex; align-items:center; justify-content:center; font-size:72px; position:relative; }
+    .remove-wish { position:absolute; top:10px; right:10px; width:32px; height:32px; background:white; border-radius:50%; border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; color:#e63946; font-size:14px; transition:all var(--transition); }
+    .remove-wish:hover { background:#e63946; color:white; border-color:#e63946; }
+    .wishlist-info { padding:18px; }
+    .w-category { font-size:12px; color:var(--green-light); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+    .w-name { font-family:'Playfair Display',serif; font-size:17px; color:var(--green-dark); margin-bottom:8px; }
+    .w-rating { display:flex; align-items:center; gap:6px; margin-bottom:12px; }
+    .w-rating .stars { color:var(--accent); font-size:13px; }
+    .w-rating .count { font-size:12px; color:var(--text-light); }
+    .w-footer { display:flex; align-items:center; justify-content:space-between; }
+    .w-price .price-current { font-size:18px; font-weight:700; color:var(--green-dark); }
+    .w-price .price-old { font-size:13px; color:var(--text-light); text-decoration:line-through; margin-left:6px; }
+    .w-add-btn { background:var(--green-dark); color:white; border:none; padding:9px 18px; border-radius:10px; cursor:pointer; font-size:13px; font-family:'DM Sans',sans-serif; font-weight:600; transition:all var(--transition); display:flex; align-items:center; gap:6px; }
+    .w-add-btn:hover { background:var(--green-mid); }
+    .wishlist-empty { text-align:center; padding:100px 20px; }
+    .wishlist-empty .empty-icon { font-size:80px; margin-bottom:24px; }
+    .wishlist-empty h3 { font-family:'Playfair Display',serif; font-size:28px; color:var(--green-dark); margin-bottom:12px; }
+    .wishlist-empty p { color:var(--text-mid); font-size:16px; margin-bottom:32px; }
+    .wishlist-empty .btn-primary { background:var(--green-dark); color:white; border:none; padding:14px 32px; border-radius:12px; font-size:16px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; }
+    .stock-badge { position:absolute; top:10px; left:10px; background:var(--accent); color:white; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; }
+    .out-stock { background:#e63946; }
+    @media(max-width:1100px){ .wishlist-grid{grid-template-columns:repeat(3,1fr);} }
+    @media(max-width:800px){ .wishlist-grid{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:500px){ .wishlist-grid{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+
+  
+  <div class="page-header">
+    <h1>❤️ My Wishlist</h1>
+    <p>Your saved plants — ready when you are</p>
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span>/</span>
+      <span class="current">Wishlist</span>
+    </div>
+  </div>
+
+  <section class="wishlist-section">
+    <div class="wishlist-header">
+      <h2>Saved Plants <span id="totalWish">(5 items)</span></h2>
+      <button class="clear-wishlist" onclick="clearWishlist()"><i class="fas fa-trash-alt"></i> Clear All</button>
+    </div>
+
+    <div class="wishlist-grid" id="wishlistGrid">
+  {% for item in wishlist_items %}
+  <div class="wishlist-card">
+    <div class="wishlist-img">
+      {% if item.product.sizes.first.images.first %}
+        <img src="{{ item.product.sizes.first.images.first.image.url }}"
+             style="width:100%;height:100%;object-fit:cover;" />
+      {% else %}
+        🌿
+      {% endif %}
+      <a href="{% url 'toggle_wishlist' item.product.id %}" class="remove-wish" title="Remove">
+        <i class="fas fa-times"></i>
+      </a>
+    </div>
+    <div class="wishlist-info">
+      <div class="w-category">{{ item.product.category.name }}</div>
+      <div class="w-name">{{ item.product.name }}</div>
+      <div class="w-footer">
+        <div class="w-price">
+          <span class="price-current">₹{{ item.product.sizes.first.variants.first.price }}</span>
+        </div>
+        <a href="{% url 'product_details' item.product.id %}" class="w-add-btn">
+          <i class="fas fa-eye"></i> View
+        </a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="wishlist-empty" style="grid-column:1/-1">
+    <div class="empty-icon">💔</div>
+    <h3>Wishlist empty hai</h3>
+    <p>Kuch plants add karo!</p>
+    <a href="{% url 'products' %}" class="btn-primary">Browse Plants</a>
+  </div>
+  {% endfor %}
+</div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <span class="brand-name">Green<span style="color:var(--green-light)">Shop</span></span>
+        <p>Your one-stop destination for premium, hand-picked plants. We bring nature closer to you with quality, care, and sustainability at heart.</p>
+        <div class="social-links">
+          <button class="social-btn"><i class="fab fa-facebook-f"></i></button>
+          <button class="social-btn"><i class="fab fa-instagram"></i></button>
+          <button class="social-btn"><i class="fab fa-twitter"></i></button>
+          <button class="social-btn"><i class="fab fa-pinterest-p"></i></button>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Quick Links</h5>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="products.html">Shop All Plants</a></li>
+          <li><a href="wishlist.html">My Wishlist</a></li>
+          <li><a href="blog.html">Plant Care Blog</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Customer Help</h5>
+        <ul>
+          <li><a href="account.html">My Account</a></li>
+          <li><a href="track-order.html">Track My Order</a></li>
+          <li><a href="faq.html">FAQs</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Get In Touch</h5>
+        <div class="footer-contact">
+          <div class="contact-item"><i class="fas fa-map-marker-alt"></i><span>42, Green Avenue, Ahmedabad, Gujarat 380015</span></div>
+          <div class="contact-item"><i class="fas fa-phone"></i><span>+91 98765 43210</span></div>
+          <div class="contact-item"><i class="fas fa-envelope"></i><span>hello@greenshop.in</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 GreenShop. All rights reserved. Made with 🌿 in India.</span>
+      <div style="display:flex;gap:20px;font-size:13px;">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+      </div>
+      <div class="payment-icons">
+        <span class="pay-icon">UPI</span><span class="pay-icon">Razorpay</span><span class="pay-icon">Visa</span><span class="pay-icon">PayTM</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="cart-overlay" id="cartOverlay">
+    <div class="cart-sidebar">
+      <div class="cart-header"><h3>🛒 Your Cart</h3><button class="cart-close" id="cartClose"><i class="fas fa-times"></i></button></div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-footer">
+        <div class="coupon-input"><input type="text" id="couponInput" placeholder="Coupon code..."/><button id="applyCoupon">Apply</button></div>
+        <div class="cart-totals">
+          <div class="total-row"><span>Subtotal</span><span id="cartSubtotal">₹0</span></div>
+          <div class="total-row"><span>Shipping</span><span id="cartShipping">₹0</span></div>
+          <div class="total-row"><span>Discount</span><span id="cartDiscount" style="color:var(--green-light)">-₹0</span></div>
+          <div class="total-row final"><span>Total</span><span id="cartTotal">₹0</span></div>
+        </div>
+        <button class="checkout-btn" onclick="window.location='cart.html'"><i class="fas fa-lock"></i> Proceed to Checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="scroll-top" id="scrollTop"><i class="fas fa-arrow-up"></i></button>
+  <script src="js/main.js"></script>
+  <script>
+    function removeWish(btn) {
+      const card = btn.closest('.wishlist-card');
+      card.style.transform = 'scale(0.8)';
+      card.style.opacity = '0';
+      setTimeout(() => {
+        card.remove();
+        const remaining = document.querySelectorAll('.wishlist-card').length;
+        document.getElementById('totalWish').textContent = `(${remaining} items)`;
+        if (remaining === 0) {
+          document.getElementById('wishlistGrid').innerHTML = `
+            <div class="wishlist-empty" style="grid-column:1/-1">
+              <div class="empty-icon">💔</div>
+              <h3>Your wishlist is empty</h3>
+              <p>Start adding plants you love!</p>
+              <button class="btn-primary" onclick="window.location='products.html'">
+                <i class="fas fa-seedling"></i> Browse Plants
+              </button>
+            </div>`;
+        }
+      }, 300);
+    }
+    function clearWishlist() {
+      document.getElementById('wishlistGrid').innerHTML = `
+        <div class="wishlist-empty" style="grid-column:1/-1">
+          <div class="empty-icon">💔</div>
+          <h3>Your wishlist is empty</h3>
+          <p>Start adding plants you love!</p>
+          <button class="btn-primary" onclick="window.location='products.html'">
+            <i class="fas fa-seedling"></i> Browse Plants
+          </button>
+        </div>`;
+      document.getElementById('totalWish').textContent = '(0 items)';
+    }
+  </script>
+</body>
+</html>
+
+
+{% endblock %}

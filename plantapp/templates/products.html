@@ -1,0 +1,325 @@
+{% extends "base.html"%}
+{% load static %}
+{% block container %}
+
+
+<style>
+    .shop-layout { display:grid; grid-template-columns:280px 1fr; gap:32px; padding:60px 6%; }
+    .sidebar { background:var(--white); border-radius:var(--radius); padding:28px; border:1.5px solid var(--border); height:fit-content; position:sticky; top:100px; }
+    .sidebar-section { margin-bottom:32px; }
+    .sidebar-section:last-child { margin-bottom:0; }
+    .sidebar-title { font-family:'Playfair Display',serif; font-size:16px; color:var(--green-dark); margin-bottom:16px; padding-bottom:10px; border-bottom:1.5px solid var(--border); }
+    .filter-check { display:flex; align-items:center; gap:10px; padding:8px 0; cursor:pointer; font-size:14px; color:var(--text-mid); transition:color var(--transition); text-decoration:none; }
+    .filter-check:hover { color:var(--green-dark); }
+    .filter-check input { accent-color:var(--green-mid); width:16px; height:16px; }
+    .filter-check .count { margin-left:auto; background:var(--green-bg); color:var(--text-light); font-size:11px; padding:2px 8px; border-radius:10px; }
+    .price-range { display:flex; flex-direction:column; gap:12px; }
+    .price-slider { width:100%; accent-color:var(--green-mid); }
+    .price-labels { display:flex; justify-content:space-between; font-size:13px; color:var(--text-mid); font-weight:600; }
+    .rating-filter { display:flex; flex-direction:column; gap:8px; }
+    .rating-row { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-mid); cursor:pointer; }
+    .rating-row .stars { color:var(--accent); font-size:14px; }
+    .shop-main { }
+    .shop-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+    .result-count { font-size:15px; color:var(--text-mid); }
+    .result-count span { color:var(--green-dark); font-weight:700; }
+    .toolbar-right { display:flex; align-items:center; gap:14px; }
+    .sort-select { border:1.5px solid var(--border); border-radius:10px; padding:10px 16px; font-size:14px; color:var(--text-mid); outline:none; font-family:'DM Sans',sans-serif; background:var(--white); cursor:pointer; }
+    .grid-toggle { display:flex; gap:4px; }
+    .grid-btn { width:36px; height:36px; border:1.5px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; color:var(--text-mid); background:var(--white); transition:all var(--transition); }
+    .grid-btn.active, .grid-btn:hover { background:var(--green-dark); color:var(--white); border-color:var(--green-dark); }
+    .products-grid-4 { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+    .pagination { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:48px; }
+    .page-btn { width:40px; height:40px; border-radius:10px; border:1.5px solid var(--border); background:var(--white); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; cursor:pointer; color:var(--text-mid); transition:all var(--transition); }
+    .page-btn:hover, .page-btn.active { background:var(--green-dark); color:var(--white); border-color:var(--green-dark); }
+    .active-filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+    .active-tag { display:inline-flex; align-items:center; gap:6px; background:var(--green-pale); color:var(--green-dark); padding:6px 14px; border-radius:20px; font-size:13px; font-weight:500; }
+    .active-tag a { color:var(--green-mid); font-size:13px; text-decoration:none; }
+    @media(max-width:900px){ .shop-layout{grid-template-columns:1fr;} .sidebar{display:none;} .products-grid-4{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:500px){ .products-grid-4{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+
+  
+  <div class="page-header">
+    <h1>🌿 All Plants</h1>
+    <p>Explore our curated collection of premium plants</p>
+
+  </div>
+
+  <div class="shop-layout">
+
+    <!-- SIDEBAR FILTERS -->
+    <aside class="sidebar">
+
+      <!-- Category Filter -->
+      <div class="sidebar-section">
+        <div class="sidebar-title"><i class="fas fa-th-large"></i> Categories</div>
+
+        <a href="{% url 'products' %}{% if search %}?search={{ search }}{% endif %}"
+           class="filter-check">
+          <input type="checkbox" {% if not selected_category %}checked{% endif %} readonly/>
+          All Plants
+          <span class="count">{{ total_count }}</span>
+        </a>
+
+        {% for cat in categories %}
+        <a href="?category={{ cat.id }}{% if search %}&search={{ search }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}"
+           class="filter-check">
+          <input type="checkbox" {% if selected_category == cat.id|stringformat:"s" %}checked{% endif %} readonly/>
+          {{ cat.icon }} {{ cat.name }}
+          <span class="count">{{ cat.products.count }}</span>
+        </a>
+        {% endfor %}
+      </div>
+
+      <!-- Price Filter -->
+      <div class="sidebar-section">
+        <div class="sidebar-title"><i class="fas fa-tag"></i> Price Range</div>
+        <form method="GET" id="priceForm">
+          {% if selected_category %}
+          <input type="hidden" name="category" value="{{ selected_category }}"/>
+          {% endif %}
+          {% if search %}
+          <input type="hidden" name="search" value="{{ search }}"/>
+          {% endif %}
+          <div class="price-range">
+            <input type="range" class="price-slider"
+                   name="max_price"
+                   min="0" max="2000"
+                   value="{{ max_price|default:2000 }}"
+                   oninput="document.getElementById('priceVal').textContent='₹'+this.value"
+                   onchange="document.getElementById('priceForm').submit()"/>
+            <div class="price-labels">
+              <span>₹0</span>
+              <span id="priceVal">₹{{ max_price|default:2000 }}</span>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Sunlight Filter -->
+      <div class="sidebar-section">
+        <div class="sidebar-title"><i class="fas fa-sun"></i> Light Need</div>
+        <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}sunlight=Full Sun{% if search %}&search={{ search }}{% endif %}"
+           class="filter-check">
+          <input type="checkbox" {% if selected_sunlight == 'Full Sun' %}checked{% endif %} readonly/>
+          Full Sun
+        </a>
+        <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}sunlight=Indirect{% if search %}&search={{ search }}{% endif %}"
+           class="filter-check">
+          <input type="checkbox" {% if selected_sunlight == 'Indirect' %}checked{% endif %} readonly/>
+          Indirect Light
+        </a>
+        <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}sunlight=Low Light{% if search %}&search={{ search }}{% endif %}"
+           class="filter-check">
+          <input type="checkbox" {% if selected_sunlight == 'Low Light' %}checked{% endif %} readonly/>
+          Low Light
+        </a>
+      </div>
+
+      <!-- Air Purifying Filter -->
+      <div class="sidebar-section">
+        <div class="sidebar-title"><i class="fas fa-leaf"></i> Features</div>
+        <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}air_purifying=true{% if search %}&search={{ search }}{% endif %}"
+           class="filter-check">
+          <input type="checkbox" {% if air_purifying %}checked{% endif %} readonly/>
+          Air Purifying
+        </a>
+      </div>
+
+      <!-- Clear All -->
+      <a href="{% url 'products' %}"
+         style="width:100%;display:block;text-align:center;background:transparent;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text-mid);margin-top:10px;text-decoration:none;">
+        Clear All Filters
+      </a>
+
+    </aside>
+
+    <!-- MAIN PRODUCT AREA -->
+    <div class="shop-main">
+
+      <!-- Toolbar -->
+      <div class="shop-toolbar">
+        <div class="result-count">
+          Showing <span>{{ products.count }}</span> plants
+          {% if search %}for "<strong>{{ search }}</strong>"{% endif %}
+        </div>
+        <div class="toolbar-right">
+          <select class="sort-select" onchange="sortProducts(this.value)">
+            <option value="">Sort: Featured</option>
+            <option value="price_low"  {% if sort == 'price_low'  %}selected{% endif %}>Price: Low to High</option>
+            <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+            <option value="newest"     {% if sort == 'newest'     %}selected{% endif %}>New Arrivals</option>
+          </select>
+          <div class="grid-toggle">
+            <button class="grid-btn active" title="Grid View"><i class="fas fa-th"></i></button>
+            <button class="grid-btn" title="List View"><i class="fas fa-list"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Filters Tags -->
+      <div class="active-filters">
+        {% if selected_category %}
+        {% for cat in categories %}
+          {% if cat.id|stringformat:"s" == selected_category %}
+          <span class="active-tag">
+            {{ cat.name }}
+            <a href="{% url 'products' %}{% if search %}?search={{ search }}{% endif %}">✕</a>
+          </span>
+          {% endif %}
+        {% endfor %}
+        {% endif %}
+
+        {% if max_price %}
+        <span class="active-tag">
+          ₹0 – ₹{{ max_price }}
+          <a href="{% url 'products' %}{% if selected_category %}?category={{ selected_category }}{% endif %}">✕</a>
+        </span>
+        {% endif %}
+
+        {% if search %}
+        <span class="active-tag">
+          Search: {{ search }}
+          <a href="{% url 'products' %}{% if selected_category %}?category={{ selected_category }}{% endif %}">✕</a>
+        </span>
+        {% endif %}
+
+        {% if selected_sunlight %}
+        <span class="active-tag">
+          {{ selected_sunlight }}
+          <a href="{% url 'products' %}{% if selected_category %}?category={{ selected_category }}{% endif %}">✕</a>
+        </span>
+        {% endif %}
+
+        {% if air_purifying %}
+        <span class="active-tag">
+          Air Purifying
+          <a href="{% url 'products' %}{% if selected_category %}?category={{ selected_category }}{% endif %}">✕</a>
+        </span>
+        {% endif %}
+      </div>
+
+      <!-- Products Grid -->
+      <div class="products-grid-4">
+        {% for p in products %}
+        <a href="{% url 'product_details' p.id %}" style="text-decoration:none; color:inherit;">
+          <div class="product-card">
+
+            <div class="product-img-wrap">
+              {% if p.sizes.first.images.first %}
+              <img src="{{ p.sizes.first.images.first.image.url }}"
+                   style="width:100%; height:100%; object-fit:cover;"
+                   alt="{{ p.name }}"/>
+              {% else %}
+              <span class="product-emoji">🌿</span>
+              {% endif %}
+
+              {% if p.badge_text %}
+              <div class="product-badges">
+                <span class="badge-label new">{{ p.badge_text }}</span>
+              </div>
+              {% endif %}
+
+              <div class="product-actions">
+                <button class="action-btn"><i class="fas fa-heart"></i></button>
+                
+                <button class="action-btn"><i class="fas fa-eye"></i></button>
+              </div>
+            </div>
+
+            <div class="product-info">
+              <div class="product-category">
+                {{ p.category.icon }} {{ p.category.name }}
+              </div>
+              <div class="product-name">{{ p.name }}</div>
+              <div class="product-footer">
+                <div class="product-price">
+                  {% with variant=p.sizes.first.variants.first %}
+                  {% if variant %}
+                  <span class="price-current">₹{{ variant.price }}</span>
+                  {% if variant.old_price %}
+                  <span class="price-old">₹{{ variant.old_price }}</span>
+                  {% endif %}
+                  {% else %}
+                  <span class="price-current">Price N/A</span>
+                  {% endif %}
+                  {% endwith %}
+                </div>
+                <button class="add-cart-btn"><i class="fas fa-plus"></i></button>
+              </div>
+            </div>
+
+            {% if p.watering or p.sunlight %}
+            <div class="product-care">
+              {% if p.watering %}<span class="care-tag">💧 {{ p.watering }}</span>{% endif %}
+              {% if p.sunlight %}<span class="care-tag">☀️ {{ p.sunlight }}</span>{% endif %}
+            </div>
+            {% endif %}
+
+          </div>
+        </a>
+        {% empty %}
+        <p style="color:var(--text-mid); grid-column:1/-1; text-align:center; padding:40px;">
+          No Products Found 🌱
+        </p>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+
+    </div>
+  </div>
+
+  
+
+  <button class="scroll-top" id="scrollTop"><i class="fas fa-arrow-up"></i></button>
+  <script src="{% static 'js/main.js' %}"></script>
+  <script>
+
+  const profileBtn = document.getElementById('profileBtn');
+  const profileDropdown = document.getElementById('profileDropdown');
+  const profileWrap = document.getElementById('profileWrap');
+
+  if (profileBtn && profileDropdown) {
+    profileBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      profileDropdown.classList.toggle('show');
+    });
+    document.addEventListener('click', function(e) {
+      if (profileWrap && !profileWrap.contains(e.target)) {
+        profileDropdown.classList.remove('show');
+      }
+    });
+  }
+
+    // Sort function
+    function sortProducts(value) {
+      const url = new URL(window.location.href);
+      if (value) {
+        url.searchParams.set('sort', value);
+      } else {
+        url.searchParams.delete('sort');
+      }
+      window.location.href = url.toString();
+    }
+
+    // Grid toggle
+    document.querySelectorAll('.grid-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.grid-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
+
+{% endblock %}

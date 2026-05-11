@@ -1,0 +1,302 @@
+{% load static %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GreenShop – Premium Plant Store</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+  <style>
+    /* ── Profile Dropdown ── */
+    .profile-wrap {
+      position: relative;
+    }
+    .profile-icon-btn {
+      background: none;
+      border: 2px solid var(--green-mid);
+      color: var(--green-dark);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      padding: 0;
+    }
+    .profile-icon-btn:hover {
+      background: var(--green-bg);
+      color: var(--green-mid);
+    }
+    .profile-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 14px);
+      right: 0;
+      width: 260px;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      z-index: 99999;
+      overflow: hidden;
+      animation: dropdownFade 0.2s ease;
+    }
+    .profile-dropdown.show {
+      display: block;
+    }
+    @keyframes dropdownFade {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .profile-dropdown-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: #f0faf4;
+    }
+    .profile-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--green-mid);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .profile-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--green-dark);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .profile-email {
+      font-size: 11px;
+      color: #888;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .profile-divider {
+      height: 1px;
+      background: #eeeeee;
+      margin: 4px 0;
+    }
+    .profile-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 18px;
+      font-size: 14px;
+      color: #333333;
+      text-decoration: none;
+      transition: background 0.15s;
+      font-weight: 500;
+    }
+    .profile-menu-item:hover {
+      background: #f0faf4;
+      color: var(--green-dark);
+    }
+    .profile-menu-item i {
+      width: 16px;
+      font-size: 14px;
+      color: var(--green-mid);
+    }
+    .logout-item { color: #e63946; }
+    .logout-item i { color: #e63946; }
+    .logout-item:hover { background: #fff0f0 !important; color: #c1121f !important; }
+
+    /* Fix navbar overflow */
+    .navbar {
+      overflow: visible !important;
+      position: relative;
+      z-index: 1000;
+    }
+    .navbar-actions {
+      overflow: visible !important;
+      position: relative;
+    }
+  </style>
+
+
+<body>
+  
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    🌿 Free Shipping on orders above <span>₹999</span> &nbsp;|&nbsp; Use code <span>GREEN10</span> for 10% off
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="brand-icon">🌿</div>
+      <span class="brand-name">Green<span>Shop</span></span>
+    </div>
+    <ul class="navbar-menu">
+      <li><a href="{% url 'index' %}" class="active">Home</a></li>
+      <li><a href="{% url 'products' %}">Shop</a></li>
+      <li><a href="{% url 'category' %}">Categories</a></li>
+      <li><a href="{% url 'about' %}">About</a></li>
+      <li><a href="{% url 'contact' %}">Contact</a></li>
+    </ul>
+    <div class="navbar-actions">
+      <form action="{% url 'products' %}" method="GET" class="nav-search">
+  <i class="fas fa-search"></i>
+  <input type="text" name="search" placeholder="Search plants..."/>
+</form>
+
+      {% if request.session.useremail %}
+      <!-- Wishlist -->
+      <button class="icon-btn" onclick="window.location='{% url 'wishlist' %}'" title="Wishlist">
+        <i class="fas fa-heart"></i>
+        <span class="badge wishlist-count">2</span>
+      </button>
+      <!-- Cart -->
+      <button class="icon-btn" onclick="window.location='{% url 'cart' %}'" title="Cart">
+        <i class="fas fa-shopping-bag"></i>
+        <span class="badge cart-count"></span>
+      </button>
+
+      <!-- Profile Dropdown -->
+      <div class="profile-wrap" id="profileWrap">
+        <button class="profile-icon-btn" id="profileBtn" title="My Account">
+          <i class="fas fa-user-circle"></i>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-dropdown-header">
+            <div class="profile-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="profile-info">
+              <span class="profile-name">{{ request.session.username }}</span>
+              <span class="profile-email">{{ request.session.useremail }}</span>
+            </div>
+          </div>
+          <div class="profile-divider"></div>
+          <a href="{% url 'account' %}" class="profile-menu-item">
+            <i class="fas fa-user"></i> My Profile
+          </a>
+          <a href="{% url 'track_order' %}" class="profile-menu-item">
+            <i class="fas fa-box"></i> My Orders
+          </a>
+          <a href="{% url 'update_password' %}" class="profile-menu-item">
+            <i class="fas fa-lock"></i> Change Password
+          </a>
+          <div class="profile-divider"></div>
+          <a href="{% url 'logout' %}" class="profile-menu-item logout-item">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
+        </div>
+      </div>
+
+      {% else %}
+      <button class="btn-login"><a href="{% url 'register' %}">Register</a></button>
+      <button class="btn-login"><a href="{% url 'login' %}">LogIn</a></button>
+      {% endif %}
+
+    </div>
+    <div class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  {% block container %}
+  {% endblock %}
+
+  {% block footer %}
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <span class="brand-name">Green<span style="color:var(--green-light)">Shop</span></span>
+        <p>Your one-stop destination for premium, hand-picked plants. We bring nature closer to you with quality, care, and sustainability at heart.</p>
+        <div class="social-links">
+          <button class="social-btn"><i class="fab fa-facebook-f"></i></button>
+          <button class="social-btn"><i class="fab fa-instagram"></i></button>
+          <button class="social-btn"><i class="fab fa-twitter"></i></button>
+          <button class="social-btn"><i class="fab fa-pinterest-p"></i></button>
+          <button class="social-btn"><i class="fab fa-youtube"></i></button>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Quick Links</h5>
+        <ul>
+          <li><a href="#">Home</a></li>
+          <li><a href="#">Shop All Plants</a></li>
+          <li><a href="#">New Arrivals</a></li>
+          <li><a href="#">Best Sellers</a></li>
+          <li><a href="#">Plant Care Blog</a></li>
+          <li><a href="#">Gift Cards</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Customer Help</h5>
+        <ul>
+          <li><a href="#">My Account</a></li>
+          <li><a href="#">Track My Order</a></li>
+          <li><a href="#">Returns &amp; Refunds</a></li>
+          <li><a href="#">Shipping Policy</a></li>
+          <li><a href="#">FAQs</a></li>
+          <li><a href="#">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Get In Touch</h5>
+        <div class="footer-contact">
+          <div class="contact-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>42, Green Avenue, Ahmedabad, Gujarat 380015</span>
+          </div>
+          <div class="contact-item">
+            <i class="fas fa-phone"></i>
+            <span>+91 98765 43210</span>
+          </div>
+          <div class="contact-item">
+            <i class="fas fa-envelope"></i>
+            <span>hello@greenshop.in</span>
+          </div>
+          <div class="contact-item">
+            <i class="fas fa-clock"></i>
+            <span>Mon–Sat: 9:00 AM – 7:00 PM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 GreenShop. All rights reserved. Made with 🌿 in India.</span>
+      <div style="display:flex;gap:20px;font-size:13px;">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Sitemap</a>
+      </div>
+      <div class="payment-icons">
+        <span class="pay-icon">UPI</span>
+        <span class="pay-icon">Razorpay</span>
+        <span class="pay-icon">Visa</span>
+        <span class="pay-icon">PayTM</span>
+      </div>
+    </div>
+  </footer>
+  {% endblock %}
+
+  <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

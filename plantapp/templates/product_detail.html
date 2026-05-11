@@ -1,0 +1,460 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ product.name }} – GreenShop</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    .product-detail { padding:60px 6%; display:grid; grid-template-columns:1fr 1fr; gap:60px; }
+    .product-gallery { }
+    .main-img { background:var(--green-bg); border-radius:var(--radius); height:480px; display:flex; align-items:center; justify-content:center; font-size:180px; position:relative; border:2px solid var(--border); margin-bottom:16px; overflow:hidden; }
+    .img-badge { position:absolute; top:20px; left:20px; background:var(--green-mid); color:var(--white); padding:6px 16px; border-radius:20px; font-size:12px; font-weight:700; text-transform:uppercase; z-index:2; }
+    .thumbnail-row { display:flex; gap:12px; }
+    .thumb { width:80px; height:80px; background:var(--green-bg); border-radius:12px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:36px; cursor:pointer; transition:all var(--transition); overflow:hidden; }
+    .thumb:hover, .thumb.active { border-color:var(--green-light); transform:scale(1.05); }
+    .product-detail-info { }
+    .detail-category { font-size:13px; color:var(--text-light); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+    .detail-name { font-family:'Playfair Display',serif; font-size:clamp(26px,3.5vw,38px); color:var(--green-dark); margin-bottom:14px; line-height:1.2; }
+    .detail-rating { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+    .detail-rating .stars { color:var(--accent); font-size:18px; }
+    .detail-rating .count { color:var(--text-light); font-size:14px; }
+    .detail-rating .reviews-link { color:var(--green-mid); font-size:14px; font-weight:600; cursor:pointer; }
+    .detail-price { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
+    .detail-price .current { font-size:36px; font-weight:800; color:var(--green-dark); }
+    .detail-price .old { font-size:20px; color:var(--text-light); text-decoration:line-through; }
+    .detail-price .discount-badge { background:linear-gradient(135deg,var(--accent),var(--accent-dark)); color:var(--white); padding:4px 12px; border-radius:12px; font-size:13px; font-weight:700; }
+    .detail-desc { font-size:15px; color:var(--text-mid); line-height:1.8; margin-bottom:28px; padding-bottom:28px; border-bottom:1.5px solid var(--border); }
+    .detail-options { margin-bottom:24px; }
+    .option-label { font-size:13px; font-weight:700; color:var(--text-mid); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; display:block; }
+    .size-options { display:flex; gap:10px; flex-wrap:wrap; }
+    .size-btn { padding:10px 20px; border:2px solid var(--border); border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; color:var(--text-mid); transition:all var(--transition); background:var(--white); font-family:'DM Sans',sans-serif; }
+    .size-btn:hover, .size-btn.active { border-color:var(--green-dark); background:var(--green-dark); color:var(--white); }
+    .pot-options { display:flex; gap:10px; flex-wrap:wrap; }
+    .pot-btn { padding:10px 18px; border:2px solid var(--border); border-radius:10px; font-size:14px; cursor:pointer; color:var(--text-mid); transition:all var(--transition); background:var(--white); font-family:'DM Sans',sans-serif; font-weight:500; }
+    .pot-btn.active, .pot-btn:hover { border-color:var(--green-mid); color:var(--green-dark); background:var(--green-bg); }
+    .qty-selector { display:flex; align-items:center; gap:16px; margin-bottom:28px; }
+    .qty-label { font-size:13px; font-weight:700; color:var(--text-mid); text-transform:uppercase; letter-spacing:0.5px; }
+    .qty-control { display:flex; align-items:center; gap:0; border:1.5px solid var(--border); border-radius:12px; overflow:hidden; }
+    .qty-control button { width:44px; height:44px; border:none; background:var(--green-bg); cursor:pointer; font-size:20px; color:var(--green-dark); font-weight:600; transition:background var(--transition); }
+    .qty-control button:hover { background:var(--green-pale); }
+    .qty-control span { width:52px; text-align:center; font-size:17px; font-weight:700; color:var(--green-dark); border-left:1.5px solid var(--border); border-right:1.5px solid var(--border); line-height:44px; }
+    .action-buttons { display:flex; gap:14px; margin-bottom:28px; }
+    .btn-add-cart-main { flex:1; background:var(--green-dark); color:var(--white); border:none; padding:16px 28px; border-radius:14px; font-size:16px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all var(--transition); display:flex; align-items:center; justify-content:center; gap:10px; }
+    .btn-add-cart-main:hover { background:var(--green-mid); transform:translateY(-2px); }
+    .btn-buy-now { flex:1; background:var(--accent); color:var(--white); border:none; padding:16px 28px; border-radius:14px; font-size:16px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all var(--transition); display:flex; align-items:center; justify-content:center; gap:10px; }
+    .btn-buy-now:hover { background:var(--accent-dark); transform:translateY(-2px); }
+    .btn-wishlist-main { width:52px; height:52px; border:2px solid var(--border); border-radius:14px; background:var(--white); cursor:pointer; font-size:20px; color:var(--text-mid); transition:all var(--transition); display:flex; align-items:center; justify-content:center; }
+    .btn-wishlist-main:hover { border-color:#e63946; color:#e63946; }
+    .guarantee-strip { display:flex; gap:20px; padding:20px; background:var(--green-bg); border-radius:14px; margin-bottom:24px; flex-wrap:wrap; }
+    .guarantee-item { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-mid); font-weight:500; }
+    .guarantee-item i { color:var(--green-mid); font-size:16px; }
+    .care-info { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:28px; }
+    .care-box { background:var(--green-bg); border-radius:12px; padding:16px 12px; text-align:center; border:1.5px solid var(--border); }
+    .care-box .icon { font-size:24px; margin-bottom:8px; }
+    .care-box .label { font-size:11px; color:var(--text-light); text-transform:uppercase; letter-spacing:0.5px; }
+    .care-box .value { font-size:13px; font-weight:600; color:var(--green-dark); margin-top:4px; }
+    .tabs-section { padding:60px 6%; background:var(--white); }
+    .tabs { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:40px; }
+    .tab { padding:14px 28px; font-size:15px; font-weight:600; color:var(--text-mid); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all var(--transition); }
+    .tab.active, .tab:hover { color:var(--green-dark); border-bottom-color:var(--green-light); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    .tab-content p { font-size:15px; color:var(--text-mid); line-height:1.85; margin-bottom:16px; }
+    .specs-table { width:100%; border-collapse:collapse; }
+    .specs-table tr { border-bottom:1px solid var(--border); }
+    .specs-table td { padding:14px 16px; font-size:14px; }
+    .specs-table td:first-child { color:var(--text-light); font-weight:600; width:200px; }
+    .specs-table td:last-child { color:var(--text-dark); }
+    .review-card { background:var(--green-bg); border-radius:var(--radius); padding:24px; margin-bottom:20px; border:1.5px solid var(--border); }
+    .review-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .reviewer { display:flex; align-items:center; gap:12px; }
+    .reviewer-avatar { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,var(--green-mid),var(--green-light)); display:flex; align-items:center; justify-content:center; font-size:18px; }
+    .reviewer-name { font-weight:600; color:var(--green-dark); font-size:15px; }
+    .reviewer-date { font-size:12px; color:var(--text-light); }
+    .review-stars { color:var(--accent); font-size:15px; }
+    .review-text { font-size:14px; color:var(--text-mid); line-height:1.7; }
+    .review-helpful { font-size:13px; color:var(--text-light); margin-top:12px; }
+    .related-section { padding:60px 6%; background:var(--green-bg); }
+    @media(max-width:900px){ .product-detail{grid-template-columns:1fr;gap:32px;} .care-info{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:600px){ .action-buttons{flex-direction:column;} .guarantee-strip{gap:12px;} }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">🌿 Free Shipping on orders above <span>₹999</span> &nbsp;|&nbsp; Use code <span>GREEN10</span> for 10% off</div>
+
+  <nav class="navbar">
+    <a href="{% url 'index' %}" class="navbar-brand">
+      <div class="brand-icon">🌿</div>
+      <span class="brand-name">Green<span>Shop</span></span>
+    </a>
+    <ul class="navbar-menu">
+      <li><a href="{% url 'index' %}">Home</a></li>
+      <li><a href="{% url 'products' %}" class="active">Shop</a></li>
+      <li><a href="{% url 'category' %}">Categories</a></li>
+      <li><a href="{% url 'about' %}">About</a></li>
+      <li><a href="{% url 'contact' %}">Contact</a></li>
+    </ul>
+    <div class="navbar-actions">
+      <div class="nav-search">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search plants..."/>
+      </div>
+      <button class="icon-btn" onclick="window.location='{% url 'wishlist' %}'">
+        <i class="fas fa-heart"></i>
+        <span class="badge">3</span>
+      </button>
+      <button class="icon-btn" id="cartBtn">
+        <i class="fas fa-shopping-bag"></i>
+        <span class="badge cart-count">2</span>
+      </button>
+      <button class="btn-login" onclick="window.location='{% url 'login' %}'">Sign In</button>
+    </div>
+  </nav>
+
+  <!-- BREADCRUMB -->
+  
+
+  <div class="product-detail">
+
+    <!-- GALLERY -->
+    <div class="product-gallery">
+      <div class="main-img">
+        {% if product.badge_text %}
+        <div class="img-badge">{{ product.badge_text }}</div>
+        {% endif %}
+
+        {% if sizes.first.images.first %}
+        <img src="{{ sizes.first.images.first.image.url }}"
+             id="mainImage"
+             style="width:100%; height:100%; object-fit:cover;"
+             alt="{{ product.name }}"/>
+        {% else %}
+        <span style="font-size:200px">🌿</span>
+        {% endif %}
+      </div>
+
+      <div class="thumbnail-row" id="thumbnailRow">
+        {% for img in sizes.first.images.all %}
+        <div class="thumb {% if forloop.first %}active{% endif %}"
+             onclick="changeMainImage('{{ img.image.url }}', this)">
+          <img src="{{ img.image.url }}"
+               style="width:100%; height:100%; object-fit:cover; border-radius:10px;"/>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- INFO -->
+    <div class="product-detail-info">
+
+      <div class="detail-category">
+        <i class="fas fa-leaf"></i>
+        {{ product.category.icon }} {{ product.category.name }}
+      </div>
+
+      <h1 class="detail-name">{{ product.name }}</h1>
+
+      <div class="detail-rating">
+    <span class="stars">
+        {% if avg_rating %}
+            {% for i in "12345" %}
+                {% if forloop.counter <= avg_rating %}★{% else %}☆{% endif %}
+            {% endfor %}
+        {% else %}
+            ☆☆☆☆☆
+        {% endif %}
+    </span>
+    <span class="count">
+        {% if avg_rating %}{{ avg_rating|floatformat:1 }}{% else %}0.0{% endif %}
+    </span>
+    <span class="reviews-link">{{ reviews.count }} Reviews</span>
+    <span style="color:var(--border)">|</span>
+    {% if sizes.first.variants.first.stock > 0 %}
+    <span style="color:var(--green-mid);font-size:14px;font-weight:600;">In Stock ✓</span>
+    {% else %}
+    <span style="color:#e63946;font-size:14px;font-weight:600;">Out of Stock ✗</span>
+    {% endif %}
+</div>
+
+      <div class="detail-price">
+        <span class="current" id="currentPrice">
+          ₹{{ sizes.first.variants.first.price }}
+        </span>
+        {% if sizes.first.variants.first.old_price %}
+        <span class="old" id="oldPrice">
+          ₹{{ sizes.first.variants.first.old_price }}
+        </span>
+        <span class="discount-badge" id="discountBadge">
+          {{ sizes.first.variants.first.discount_percent }}% OFF
+        </span>
+        {% endif %}
+      </div>
+
+      <p class="detail-desc">{{ product.description }}</p>
+
+      <!-- SIZE OPTIONS -->
+      <div class="detail-options">
+        <span class="option-label">Plant Size</span>
+        <div class="size-options">
+          {% for size in sizes %}
+          <button class="size-btn {% if forloop.first %}active{% endif %}"
+                  data-size-id="{{ size.id }}"
+                  onclick="changeSize({{ size.id }}, this)">
+            {{ size.size_name }}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- POT OPTIONS -->
+      <div class="detail-options">
+        <span class="option-label">Pot Type</span>
+        <div class="pot-options">
+          {% for pot in pots %}
+          <button class="pot-btn {% if forloop.first %}active{% endif %}"
+                  data-pot-id="{{ pot.id }}"
+                  onclick="changePot({{ pot.id }}, this)">
+            {{ pot.icon }} {{ pot.pot_name }}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+    
+      <!-- ACTION BUTTONS -->
+      <div class="action-buttons">
+        <button class="btn-add-cart-main">
+          <i class="fas fa-shopping-bag"></i> Add to Cart
+        </button>
+        <button class="btn-buy-now" onclick="window.location='{% url 'cart' %}'">
+          <i class="fas fa-bolt"></i> Buy Now
+        </button>
+        <button class="btn-wishlist-main">
+          <i class="fas fa-heart"></i>
+        </button>
+      </div>
+
+      <!-- GUARANTEE -->
+      <div class="guarantee-strip">
+        <div class="guarantee-item"><i class="fas fa-shield-alt"></i> 30-Day Guarantee</div>
+        <div class="guarantee-item"><i class="fas fa-truck"></i> Free Delivery above ₹499</div>
+        <div class="guarantee-item"><i class="fas fa-leaf"></i> Expert Care Included</div>
+        <div class="guarantee-item"><i class="fas fa-undo"></i> Easy Returns</div>
+      </div>
+
+      <!-- CARE INFO -->
+      <div class="care-info">
+        <div class="care-box">
+          <div class="icon">💧</div>
+          <div class="label">Watering</div>
+          <div class="value">{{ product.watering|default:"—" }}</div>
+        </div>
+        <div class="care-box">
+          <div class="icon">☀️</div>
+          <div class="label">Sunlight</div>
+          <div class="value">{{ product.sunlight|default:"—" }}</div>
+        </div>
+        <div class="care-box">
+          <div class="icon">🌡️</div>
+          <div class="label">Temperature</div>
+          <div class="value">{{ product.temperature|default:"—" }}</div>
+        </div>
+        <div class="care-box">
+          <div class="icon">🌬️</div>
+          <div class="label">Humidity</div>
+          <div class="value">{{ product.humidity|default:"—" }}</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-section">
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('desc',this)">Description</div>
+      <div class="tab" onclick="showTab('specs',this)">Plant Details</div>
+      <div class="tab" onclick="showTab('care',this)">Care Guide</div>
+      <div class="tab" onclick="showTab('reviews',this)">Reviews</div>
+    </div>
+
+    <!-- Description Tab -->
+    <div class="tab-content active" id="tab-desc">
+      {% if product.description %}
+        <p>{{ product.description }}</p>
+      {% else %}
+        <p>Description not available</p>
+      {% endif %}
+    </div>
+
+    <!-- Plant Details Tab -->
+    <div class="tab-content" id="tab-specs">
+      <table class="specs-table">
+        <tr><td>Scientific Name</td><td>{{ product.scientific_name|default:"—" }}</td></tr>
+        <tr><td>Common Name</td><td>{{ product.common_name|default:"—" }}</td></tr>
+        <tr><td>Family</td><td>{{ product.family|default:"—" }}</td></tr>
+        <tr><td>Origin</td><td>{{ product.origin|default:"—" }}</td></tr>
+        <tr><td>Plant Type</td><td>{{ product.plant_type|default:"—" }}</td></tr>
+        <tr><td>Mature Height</td><td>{{ product.mature_height|default:"—" }}</td></tr>
+        <tr><td>Growth Rate</td><td>{{ product.growth_rate|default:"—" }}</td></tr>
+        <tr><td>Toxicity</td><td>{{ product.toxicity|default:"—" }}</td></tr>
+        <tr><td>Air Purifying</td><td>{% if product.air_purifying %}Yes ✅{% else %}No{% endif %}</td></tr>
+      </table>
+    </div>
+
+    <!-- Care Guide Tab -->
+    <div class="tab-content" id="tab-care">
+      {% if product.care_guide %}
+        <p>{{ product.care_guide }}</p>
+      {% else %}
+        <p>Care guide available nahi hai.</p>
+      {% endif %}
+    </div>
+
+   <!-- Reviews Tab -->
+<div class="tab-content" id="tab-reviews">
+  {% for review in reviews %}
+  <div class="review-card">
+    <div class="review-header">
+      <div class="reviewer">
+        <div class="reviewer-avatar">👤</div>
+        <div>
+          <div class="reviewer-name">
+            {{ review.user.fname }} {{ review.user.lname }}
+          </div>
+          <div class="reviewer-date">
+            {{ review.created_at|date:"F d, Y" }} · Verified Purchase
+          </div>
+        </div>
+      </div>
+      <div class="review-stars">
+        {% for i in "12345" %}
+          {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    <p class="review-text">{{ review.comment }}</p>
+  </div>
+  {% empty %}
+  <p style="color:var(--text-mid); text-align:center; padding:40px;">
+    No reviews yet. Be the first to review! 🌿
+  </p>
+  {% endfor %}
+</div>
+  
+  <button class="scroll-top" id="scrollTop"><i class="fas fa-arrow-up"></i></button>
+  <script src="{% static 'js/main.js' %}"></script>
+
+  <script>
+    // Saari sizes ka data JSON mein
+    const sizesData = {
+      {% for size in sizes %}
+      {{ size.id }}: {
+        images: [
+          {% for img in size.images.all %}
+          "{{ img.image.url }}",
+          {% endfor %}
+        ],
+        variants: {
+          {% for variant in size.variants.all %}
+          {{ variant.pot.id }}: {
+            price    : "{{ variant.price }}",
+            old_price: "{{ variant.old_price|default:'' }}",
+            discount : "{{ variant.discount_percent }}",
+            stock    : {{ variant.stock }},
+          },
+          {% endfor %}
+        }
+      },
+      {% endfor %}
+    };
+
+    let selectedSizeId = {{ sizes.first.id|default:0 }};
+    let selectedPotId  = {{ pots.first.id|default:0 }};
+
+    // Quantity change
+    function changeQty(d) {
+      const el = document.getElementById('qtyVal');
+      let v = parseInt(el.textContent) + d;
+      if(v < 1) v = 1;
+      el.textContent = v;
+    }
+
+    // Tab switch
+    function showTab(id, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-'+id).classList.add('active');
+      el.classList.add('active');
+    }
+
+    // Size change
+    function changeSize(sizeId, btn) {
+      selectedSizeId = sizeId;
+      document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateImages(sizeId);
+      updatePrice();
+    }
+
+    // Pot change
+    function changePot(potId, btn) {
+      selectedPotId = potId;
+      document.querySelectorAll('.pot-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updatePrice();
+    }
+
+    // Images update
+    function updateImages(sizeId) {
+      const data = sizesData[sizeId];
+      if (!data || !data.images.length) return;
+
+      document.getElementById('mainImage').src = data.images[0];
+
+      const row = document.getElementById('thumbnailRow');
+      row.innerHTML = '';
+      data.images.forEach((url, i) => {
+        row.innerHTML += `
+          <div class="thumb ${i===0?'active':''}"
+               onclick="changeMainImage('${url}', this)">
+            <img src="${url}"
+                 style="width:100%;height:100%;object-fit:cover;border-radius:10px;"/>
+          </div>`;
+      });
+    }
+
+    // Price update
+    function updatePrice() {
+      const data = sizesData[selectedSizeId];
+      if (!data) return;
+      const variant = data.variants[selectedPotId];
+      if (!variant) return;
+
+      document.getElementById('currentPrice').textContent = '₹' + variant.price;
+
+      const oldEl = document.getElementById('oldPrice');
+      const discEl = document.getElementById('discountBadge');
+
+      if (variant.old_price && oldEl) {
+        oldEl.textContent = '₹' + variant.old_price;
+      }
+      if (variant.discount && discEl) {
+        discEl.textContent = variant.discount + '% OFF';
+      }
+    }
+
+    // Thumbnail click
+    function changeMainImage(url, el) {
+      document.getElementById('mainImage').src = url;
+      document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+{% load static %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In – GreenShop</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    .auth-page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .auth-left {
+      background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 60%, #40916c 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-left::before {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(82,183,136,0.2) 0%, transparent 70%);
+      top: -100px; right: -100px; border-radius: 50%;
+    }
+    .auth-left::after {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(244,162,97,0.12) 0%, transparent 70%);
+      bottom: -80px; left: -60px; border-radius: 50%;
+    }
+    .auth-left-content { position: relative; z-index: 2; text-align: center; }
+    .auth-big-emoji { font-size: 90px; margin-bottom: 28px; animation: floatImg 5s ease-in-out infinite; }
+    .auth-left h2 { font-size: 36px; color: #fff; margin-bottom: 14px; }
+    .auth-left p { color: rgba(255,255,255,0.72); font-size: 16px; line-height: 1.7; max-width: 340px; margin: 0 auto 36px; }
+    .auth-perks { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 320px; }
+    .perk { display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 14px 18px; }
+    .perk-icon { font-size: 24px; }
+    .perk-text strong { display: block; color: #fff; font-size: 14px; margin-bottom: 2px; }
+    .perk-text span { color: rgba(255,255,255,0.6); font-size: 12px; }
+    .auth-right {
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 48px;
+    }
+    .auth-form-box { width: 100%; max-width: 400px; }
+    .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; cursor: pointer; }
+    .auth-logo .brand-icon { width: 42px; height: 42px; font-size: 22px; border-radius: 12px; }
+    .auth-logo .brand-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--green-dark); }
+    .auth-logo .brand-name span { color: var(--green-light); }
+    .auth-form-box h2 { font-size: 30px; color: var(--green-dark); margin-bottom: 6px; }
+    .auth-form-box .sub { color: var(--text-light); font-size: 15px; margin-bottom: 32px; }
+    .btn-google {
+      width: 100%; background: var(--white); color: var(--text-dark);
+      border: 1.5px solid var(--border); padding: 13px; border-radius: 12px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all var(--transition);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin-bottom: 20px;
+    }
+    .btn-google:hover { border-color: var(--green-light); background: var(--green-bg); }
+    .divider { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+    .divider span { font-size: 13px; color: var(--text-light); }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { font-size: 13px; font-weight: 600; color: var(--text-mid); display: block; margin-bottom: 7px; }
+    .form-group input {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 13px 16px; font-size: 15px; outline: none;
+      font-family: 'DM Sans', sans-serif; color: var(--text-dark);
+      transition: border-color var(--transition);
+    }
+    .form-group input:focus { border-color: var(--green-light); }
+    .input-wrap { position: relative; }
+    .input-wrap i { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-light); cursor: pointer; font-size: 15px; }
+    .form-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .remember { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-mid); cursor: pointer; }
+    .remember input { width: auto; accent-color: var(--green-mid); }
+    .forgot { font-size: 14px; color: var(--green-mid); font-weight: 600; cursor: pointer; }
+    .btn-form {
+      width: 100%; background: var(--green-dark); color: var(--white);
+      border: none; padding: 15px; border-radius: 12px;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all var(--transition);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .btn-form:hover { background: var(--green-mid); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .switch-link { text-align: center; margin-top: 24px; font-size: 14px; color: var(--text-mid); }
+    .switch-link a { color: var(--green-mid); font-weight: 600; }
+    @media(max-width:768px) {
+      .auth-page { grid-template-columns: 1fr; }
+      .auth-left { display: none; }
+      .auth-right { padding: 40px 24px; }
+    }
+  </style>
+</head>
+<body>
+<div class="auth-page">
+  <!-- LEFT PANEL -->
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <div class="auth-big-emoji">🌿</div>
+      <h2>Welcome Back,<br>Plant Lover!</h2>
+      <p>Sign in to access your wishlist, track orders, and discover new plants curated just for you.</p>
+      <div class="auth-perks">
+        <div class="perk">
+          <span class="perk-icon">❤️</span>
+          <div class="perk-text">
+            <strong>Your Wishlist</strong>
+            <span>Save your favourite plants</span>
+          </div>
+        </div>
+        <div class="perk">
+          <span class="perk-icon">📦</span>
+          <div class="perk-text">
+            <strong>Track Orders</strong>
+            <span>Know exactly where your plants are</span>
+          </div>
+        </div>
+        <div class="perk">
+          <span class="perk-icon">🎁</span>
+          <div class="perk-text">
+            <strong>Exclusive Deals</strong>
+            <span>Members-only discounts & offers</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <form method="POST">
+    {% csrf_token %}
+  <div class="auth-right">
+    <div class="auth-form-box">
+      <a href="{% url 'index' %}" class="auth-logo">
+        <div class="brand-icon">🌿</div>
+        <span class="brand-name">Green<span>Shop</span></span>
+      </a>
+      {% if msg %}
+  <h2 style="color: #e63946; font-size: 25px; font-weight: 500;">{{ msg }}</h2>
+{% endif %}
+      <h2>Sign In</h2>
+      <p class="sub">Don't have an account? <a href="{% url 'register' %}" style="color:var(--green-mid);font-weight:600;">Create one free</a></p>
+
+      <button class="btn-google">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G"/>
+        Continue with Google
+      </button>
+      <div class="divider"><span>or sign in with email</span></div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" name="email" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="password" id="loginPass" placeholder="Enter your password" name="password" />
+          <i class="fas fa-eye" id="togglePass"></i>
+        </div>
+      </div>
+      <div class="form-row">
+  <label class="remember"><input type="checkbox"/> Remember me</label>
+  <a href="{% url 'forget_password' %}" class="forgot">Forgot password?</a>
+</div>
+      <button class="btn-form" id="loginBtn" type="submit" ><i class="fas fa-sign-in-alt"></i> Sign In</button>
+      <div class="switch-link">New to GreenShop? <a href="{% url 'register' %}">Create account</a></div>
+    </div>
+  </div>
+</form>
+</div>
+
+<script>
+  document.getElementById('togglePass').addEventListener('click', function() {
+    const inp = document.getElementById('loginPass');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    this.classList.toggle('fa-eye'); this.classList.toggle('fa-eye-slash');
+  });
+  document.getElementById('loginBtn').addEventListener('click', function() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    if (!email || !pass) { alert('Please fill in all fields.'); return; }
+    window.location.href = '{% url 'index' %}';
+  });
+</script>
+</body>
+</html>

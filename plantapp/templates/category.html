@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block container %}
+<style>
+  .page-header {
+    background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
+    padding: 56px 6% 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '🌿';
+    position: absolute;
+    right: 6%; top: 50%;
+    transform: translateY(-50%);
+    font-size: 120px;
+    opacity: 0.12;
+    pointer-events: none;
+  }
+  .page-header h1 {
+    font-family: 'Playfair Display', serif;
+    color: #fff;
+    font-size: clamp(28px, 4vw, 42px);
+    margin-bottom: 8px;
+  }
+  .page-header h1 span { color: var(--green-pale); }
+  .page-header p { color: var(--green-pale); font-size: 15px; opacity: 0.85; }
+
+  .categories-page {
+    padding: 52px 6% 80px;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  .cats-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .cats-topbar h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--green-dark);
+  }
+  .cats-topbar h2 span { color: var(--green-light); }
+  .cats-topbar p { font-size: 14px; color: var(--text-light); margin-top: 4px; }
+
+  .cats-search {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 30px;
+    padding: 11px 20px;
+    display: flex; align-items: center; gap: 10px;
+    max-width: 300px;
+    box-shadow: var(--shadow);
+  }
+  .cats-search input {
+    border: none; outline: none; background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--text-dark); flex: 1;
+  }
+  .cats-search i { color: var(--text-light); font-size: 13px; }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 22px;
+  }
+
+  .cat-card-item {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 24px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+    text-align: center;
+    animation: fadeInUp 0.4s ease both;
+  }
+  .cat-card-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 40px rgba(26,60,46,0.14);
+    border-color: var(--green-light);
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .cat-img-wrap {
+    width: 88px; height: 88px;
+    background: var(--green-bg);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+    overflow: hidden;
+    border: 3px solid var(--green-bg2);
+    transition: transform 0.3s;
+  }
+  .cat-card-item:hover .cat-img-wrap { transform: scale(1.08); }
+  .cat-img-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover; border-radius: 50%;
+  }
+
+  .cat-card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px; font-weight: 700;
+    color: var(--green-dark); line-height: 1.3;
+  }
+  .cat-card-count {
+    font-size: 13px; color: var(--green-light); font-weight: 600;
+    background: var(--green-bg);
+    padding: 4px 14px; border-radius: 20px;
+  }
+  .cat-card-desc {
+    font-size: 12.5px;
+    color: var(--text-light);
+    line-height: 1.5;
+  }
+
+  .cats-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+  }
+  .cats-empty .empty-icon { font-size: 72px; margin-bottom: 20px; }
+  .cats-empty h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--green-dark); font-size: 22px; margin-bottom: 10px;
+  }
+  .cats-empty p { color: var(--text-light); font-size: 15px; }
+
+  @media (max-width: 600px) {
+    .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .cats-topbar { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1>Plant <span>Categories</span></h1>
+  <p>Browse all plant categories in our store.</p>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="categories-page">
+
+  <div class="cats-topbar">
+    <div>
+      <h2>All <span>Categories</span></h2>
+      <p>{{ category|length }} categor{% if category|length == 1 %}y{% else %}ies{% endif %} available</p>
+    </div>
+    <div class="cats-search">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search categories..." />
+    </div>
+  </div>
+
+  <!-- Category Grid -->
+  <div class="cat-grid" id="catGrid">
+    {% if category %}
+      {% for c in category %}
+        <a class="cat-card-item"
+           href="{% url 'category_products' c.id %}"
+           style="animation-delay: {{ forloop.counter0 }}00ms;">
+
+          <div class="cat-img-wrap">
+            {% if c.image %}
+              <img src="{{ c.image.url }}" alt="{{ c.name }}" />
+            {% else %}
+              {{ c.icon|default:"🌿" }}
+            {% endif %}
+          </div>
+
+          <div class="cat-card-name">{{ c.name }}</div>
+
+          <div class="cat-card-count">
+            {{ c.products.count }} Plant{{ c.products.count|pluralize }}
+          </div>
+
+          {% if c.description %}
+            <div class="cat-card-desc">{{ c.description }}</div>
+          {% endif %}
+
+        </a>
+      {% endfor %}
+
+    {% else %}
+      <div class="cats-empty">
+        <div class="empty-icon">🌱</div>
+        <h3>No Categories Yet</h3>
+        <p>Categories will appear here once added from the admin panel.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+
+  const profileBtn = document.getElementById('profileBtn');
+  const profileDropdown = document.getElementById('profileDropdown');
+  const profileWrap = document.getElementById('profileWrap');
+
+  if (profileBtn && profileDropdown) {
+    profileBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      profileDropdown.classList.toggle('show');
+    });
+    document.addEventListener('click', function(e) {
+      if (profileWrap && !profileWrap.contains(e.target)) {
+        profileDropdown.classList.remove('show');
+      }
+    });
+  }
+
+  // Search filter
+  document.getElementById('searchInput').addEventListener('input', function () {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.cat-card-item').forEach(card => {
+      const name = card.querySelector('.cat-card-name')?.textContent.toLowerCase() || '';
+      const desc = card.querySelector('.cat-card-desc')?.textContent.toLowerCase() || '';
+      card.style.display = (name.includes(q) || desc.includes(q)) ? '' : 'none';
+    });
+  });
+</script>
+
+{% endblock %}

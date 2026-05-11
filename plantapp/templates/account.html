@@ -1,0 +1,421 @@
+{% extends "base.html"%}
+{% load static %}
+{% block container %}
+  
+  <style>
+    .account-layout { display:grid; grid-template-columns:280px 1fr; gap:32px; padding:60px 6%; }
+    .account-sidebar { background:var(--white); border-radius:var(--radius); border:1.5px solid var(--border); padding:0; overflow:hidden; height:fit-content; position:sticky; top:100px; }
+    .account-profile { background:linear-gradient(135deg,var(--green-dark),var(--green-mid)); padding:32px 24px; text-align:center; }
+    .profile-avatar { width:80px; height:80px; border-radius:50%; background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto 16px; border:3px solid rgba(255,255,255,0.3); }
+    .profile-name { color:white; font-family:'Playfair Display',serif; font-size:20px; font-weight:700; margin-bottom:4px; }
+    .profile-email { color:var(--green-pale); font-size:13px; }
+    .account-nav { padding:16px 0; }
+    .acc-nav-item { display:flex; align-items:center; gap:14px; padding:14px 24px; cursor:pointer; transition:all var(--transition); color:var(--text-mid); font-size:15px; border-left:3px solid transparent; }
+    .acc-nav-item:hover, .acc-nav-item.active { background:var(--green-bg); color:var(--green-dark); border-left-color:var(--green-light); font-weight:600; }
+    .acc-nav-item i { width:20px; text-align:center; color:var(--green-mid); }
+    .acc-nav-item.active i { color:var(--green-dark); }
+    .acc-nav-item .nav-badge { margin-left:auto; background:var(--green-light); color:white; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; }
+    .account-main { }
+    .acc-panel { display:none; }
+    .acc-panel.active { display:block; }
+    .panel-title { font-family:'Playfair Display',serif; font-size:26px; color:var(--green-dark); margin-bottom:28px; }
+    /* Dashboard */
+    .dash-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
+    .dash-stat { background:var(--white); border-radius:var(--radius); border:1.5px solid var(--border); padding:22px 20px; text-align:center; }
+    .dash-stat .stat-icon { font-size:28px; margin-bottom:10px; }
+    .dash-stat .stat-num { font-family:'Playfair Display',serif; font-size:28px; color:var(--green-dark); font-weight:700; }
+    .dash-stat .stat-lbl { font-size:13px; color:var(--text-light); margin-top:4px; }
+    .recent-orders { background:var(--white); border-radius:var(--radius); border:1.5px solid var(--border); overflow:hidden; }
+    .table-head { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:16px; padding:16px 24px; background:var(--green-bg); font-size:12px; font-weight:700; color:var(--text-mid); text-transform:uppercase; letter-spacing:0.5px; }
+    .table-row { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:16px; padding:18px 24px; border-top:1px solid var(--border); align-items:center; font-size:14px; color:var(--text-dark); }
+    .table-row:hover { background:var(--green-bg); }
+    .order-status { padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+    .status-delivered { background:#d4edda; color:#155724; }
+    .status-processing { background:#fff3cd; color:#856404; }
+    .status-shipped { background:#cce5ff; color:#004085; }
+    .view-order-btn { background:var(--green-dark); color:white; border:none; padding:6px 14px; border-radius:8px; font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    /* Profile edit */
+    .profile-form { background:var(--white); border-radius:var(--radius); border:1.5px solid var(--border); padding:32px; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .form-group { display:flex; flex-direction:column; gap:8px; }
+    .form-group label { font-size:13px; font-weight:600; color:var(--green-dark); }
+    .form-group input, .form-group select, .form-group textarea { border:1.5px solid var(--border); border-radius:10px; padding:12px 16px; font-size:14px; font-family:'DM Sans',sans-serif; outline:none; background:var(--white); transition:border-color var(--transition); }
+    .form-group input:focus, .form-group select:focus { border-color:var(--green-mid); }
+    .form-group.full { grid-column:1/-1; }
+    .save-btn { background:var(--green-dark); color:white; border:none; padding:14px 36px; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; margin-top:8px; transition:background var(--transition); }
+    .save-btn:hover { background:var(--green-mid); }
+    /* Addresses */
+    .address-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .address-card { background:var(--white); border-radius:var(--radius); border:1.5px solid var(--border); padding:24px; position:relative; }
+    .address-card.default-addr { border-color:var(--green-light); }
+    .default-tag { position:absolute; top:16px; right:16px; background:var(--green-light); color:white; font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; }
+    .address-name { font-weight:700; color:var(--green-dark); margin-bottom:6px; font-size:16px; }
+    .address-text { color:var(--text-mid); font-size:14px; line-height:1.6; margin-bottom:16px; }
+    .address-actions { display:flex; gap:10px; }
+    .addr-btn { padding:7px 18px; border-radius:8px; font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; border:1.5px solid var(--border); background:var(--white); color:var(--text-mid); transition:all var(--transition); }
+    .addr-btn.primary { background:var(--green-dark); color:white; border-color:var(--green-dark); }
+    .addr-btn:hover { background:var(--green-dark); color:white; border-color:var(--green-dark); }
+    .add-address-card { border:2px dashed var(--border); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-height:160px; cursor:pointer; color:var(--text-light); transition:all var(--transition); border-radius:var(--radius); }
+    .add-address-card:hover { border-color:var(--green-light); color:var(--green-mid); }
+    .add-address-card i { font-size:28px; }
+    /* Wishlist tab */
+    .wish-mini-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    @media(max-width:1100px){ .account-layout{grid-template-columns:1fr;} .account-sidebar{position:static;} .dash-stats{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:700px){ .form-grid{grid-template-columns:1fr;} .address-grid{grid-template-columns:1fr;} .wish-mini-grid{grid-template-columns:repeat(2,1fr);} .table-head,.table-row{grid-template-columns:1fr 1fr 1fr;} .table-head span:nth-child(4),.table-head span:nth-child(5),.table-row span:nth-child(4),.table-row span:last-child{display:none;} }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>👤 My Account</h1>
+    <p>Manage your profile, orders & preferences</p>
+    <div class="breadcrumb">
+      <a href="{% url 'index' %}">Home</a>
+      <span>/</span>
+      <span class="current">My Account</span>
+    </div>
+  </div>
+
+  <div class="account-layout">
+    <!-- SIDEBAR -->
+    <aside class="account-sidebar">
+      <div class="account-profile">
+        <div class="profile-avatar">🌿</div>
+        <div class="profile-name">{{user.fname}} {{user.lname}}</div>
+        <div class="profile-email">{{user.email}}</div>
+      </div>
+      <nav class="account-nav">
+        <div class="acc-nav-item active" onclick="switchPanel('dashboard', this)">
+          <i class="fas fa-th-large"></i> Dashboard
+        </div>
+        <div class="acc-nav-item" onclick="switchPanel('orders', this)">
+          <i class="fas fa-box"></i> My Orders <span class="nav-badge">12</span>
+        </div>
+        <div class="acc-nav-item" onclick="switchPanel('wishlist', this)">
+          <i class="fas fa-heart"></i> Wishlist <span class="nav-badge">5</span>
+        </div>
+        <div class="acc-nav-item" onclick="switchPanel('addresses', this)">
+          <i class="fas fa-map-marker-alt"></i> Addresses
+        </div>
+        <div class="acc-nav-item" onclick="switchPanel('profile', this)">
+          <i class="fas fa-user-edit"></i> Edit Profile
+        </div>
+        <div class="acc-nav-item" onclick="switchPanel('password', this)">
+          <i class="fas fa-lock"></i> Change Password
+        </div>
+        <div class="acc-nav-item" style="color:#e63946;border-top:1px solid var(--border);margin-top:8px;">
+          <i class="fas fa-sign-out-alt" style="color:#e63946"></i> Sign Out
+        </div>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="account-main">
+
+      <!-- DASHBOARD -->
+      <div class="acc-panel active" id="panel-dashboard">
+        <div class="panel-title">Welcome back, {{user.fname}} {{user.lname}} 🌿</div>
+        <div class="dash-stats">
+          <div class="dash-stat">
+            <div class="stat-icon">📦</div>
+            <div class="stat-num">12</div>
+            <div class="stat-lbl">Total Orders</div>
+          </div>
+          <div class="dash-stat">
+            <div class="stat-icon">❤️</div>
+            <div class="stat-num">5</div>
+            <div class="stat-lbl">Wishlist Items</div>
+          </div>
+          <div class="dash-stat">
+            <div class="stat-icon">🌿</div>
+            <div class="stat-num">28</div>
+            <div class="stat-lbl">Plants Bought</div>
+          </div>
+          <div class="dash-stat">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-num">8</div>
+            <div class="stat-lbl">Reviews Given</div>
+          </div>
+        </div>
+        <div style="background:var(--white);border-radius:var(--radius);border:1.5px solid var(--border);padding:28px;margin-bottom:24px;">
+          <h4 style="font-family:'Playfair Display',serif;color:var(--green-dark);margin-bottom:16px;">Latest Order</h4>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+            <div>
+              <div style="font-size:13px;color:var(--text-light);">Order #GS-2025-0312</div>
+              <div style="font-weight:600;color:var(--green-dark);margin:4px 0;">Monstera Deliciosa + Peace Lily</div>
+              <div style="font-size:13px;color:var(--text-mid);">Placed on 28 Apr 2025 &nbsp;·&nbsp; ₹1,248</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              <span class="order-status status-shipped">🚚 Shipped</span>
+              <button class="view-order-btn" onclick="switchPanel('orders', document.querySelector('[onclick*=orders]'))">Track Order</button>
+            </div>
+          </div>
+          <div style="margin-top:20px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+            <div style="width:60%;height:100%;background:linear-gradient(90deg,var(--green-mid),var(--green-light));border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-top:8px;">
+            <span>✅ Confirmed</span><span>📦 Packed</span><span style="color:var(--green-mid);font-weight:700;">🚚 Shipped</span><span>🏠 Delivered</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDERS -->
+      <div class="acc-panel" id="panel-orders">
+        <div class="panel-title">My Orders</div>
+        <div class="recent-orders">
+          <div class="table-head">
+            <span>Order ID</span>
+            <span>Date</span>
+            <span>Items</span>
+            <span>Total</span>
+            <span>Status / Action</span>
+          </div>
+          <div class="table-row">
+            <span style="font-weight:600;">#GS-2025-0312</span>
+            <span>28 Apr 2025</span>
+            <span>2 Plants</span>
+            <span style="font-weight:700;color:var(--green-dark);">₹1,248</span>
+            <span style="display:flex;align-items:center;gap:8px;"><span class="order-status status-shipped">Shipped</span><button class="view-order-btn" onclick="window.location='track-order.html'">Track</button></span>
+          </div>
+          <div class="table-row">
+            <span style="font-weight:600;">#GS-2025-0287</span>
+            <span>15 Apr 2025</span>
+            <span>3 Plants</span>
+            <span style="font-weight:700;color:var(--green-dark);">₹2,196</span>
+            <span style="display:flex;align-items:center;gap:8px;"><span class="order-status status-delivered">Delivered</span><button class="view-order-btn">View</button></span>
+          </div>
+          <div class="table-row">
+            <span style="font-weight:600;">#GS-2025-0241</span>
+            <span>2 Apr 2025</span>
+            <span>1 Plant</span>
+            <span style="font-weight:700;color:var(--green-dark);">₹649</span>
+            <span style="display:flex;align-items:center;gap:8px;"><span class="order-status status-delivered">Delivered</span><button class="view-order-btn">View</button></span>
+          </div>
+          <div class="table-row">
+            <span style="font-weight:600;">#GS-2025-0198</span>
+            <span>18 Mar 2025</span>
+            <span>4 Plants</span>
+            <span style="font-weight:700;color:var(--green-dark);">₹3,044</span>
+            <span style="display:flex;align-items:center;gap:8px;"><span class="order-status status-delivered">Delivered</span><button class="view-order-btn">View</button></span>
+          </div>
+          <div class="table-row">
+            <span style="font-weight:600;">#GS-2025-0156</span>
+            <span>5 Mar 2025</span>
+            <span>2 Plants</span>
+            <span style="font-weight:700;color:var(--green-dark);">₹1,498</span>
+            <span style="display:flex;align-items:center;gap:8px;"><span class="order-status status-processing">Processing</span><button class="view-order-btn">View</button></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- WISHLIST -->
+      <div class="acc-panel" id="panel-wishlist">
+        <div class="panel-title">My Wishlist</div>
+        <div class="wish-mini-grid">
+          <div class="wishlist-card" style="background:var(--white);border-radius:var(--radius);border:1.5px solid var(--border);overflow:hidden;">
+            <div style="background:var(--green-bg);height:140px;display:flex;align-items:center;justify-content:center;font-size:60px;">🌿</div>
+            <div style="padding:16px;">
+              <div style="font-size:12px;color:var(--green-light);font-weight:600;margin-bottom:4px;">Indoor Plant</div>
+              <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--green-dark);margin-bottom:10px;">Monstera Deliciosa</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-weight:700;color:var(--green-dark);">₹649</span>
+                <button class="view-order-btn" onclick="addToCart(1,'Monstera',649,'🌿')">Add to Cart</button>
+              </div>
+            </div>
+          </div>
+          <div class="wishlist-card" style="background:var(--white);border-radius:var(--radius);border:1.5px solid var(--border);overflow:hidden;">
+            <div style="background:var(--green-bg);height:140px;display:flex;align-items:center;justify-content:center;font-size:60px;">🌸</div>
+            <div style="padding:16px;">
+              <div style="font-size:12px;color:var(--green-light);font-weight:600;margin-bottom:4px;">Flowering</div>
+              <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--green-dark);margin-bottom:10px;">Peace Lily</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-weight:700;color:var(--green-dark);">₹399</span>
+                <button class="view-order-btn" onclick="addToCart(2,'Peace Lily',399,'🌸')">Add to Cart</button>
+              </div>
+            </div>
+          </div>
+          <div class="wishlist-card" style="background:var(--white);border-radius:var(--radius);border:1.5px solid var(--border);overflow:hidden;">
+            <div style="background:var(--green-bg);height:140px;display:flex;align-items:center;justify-content:center;font-size:60px;">🌵</div>
+            <div style="padding:16px;">
+              <div style="font-size:12px;color:var(--green-light);font-weight:600;margin-bottom:4px;">Succulent</div>
+              <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--green-dark);margin-bottom:10px;">Desert Rose Cactus</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-weight:700;color:var(--green-dark);">₹249</span>
+                <button class="view-order-btn" onclick="addToCart(3,'Desert Rose',249,'🌵')">Add to Cart</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:20px;"><a href="wishlist.html" style="color:var(--green-mid);font-weight:600;font-size:14px;">View full wishlist →</a></div>
+      </div>
+
+      <!-- ADDRESSES -->
+      <div class="acc-panel" id="panel-addresses">
+        <div class="panel-title">Saved Addresses</div>
+        <div class="address-grid">
+          <div class="address-card default-addr">
+            <span class="default-tag">Default</span>
+            <div class="address-name">Priya Sharma</div>
+            <div class="address-text">42, Shanti Nagar, Near Bodakdev Circle,<br>Ahmedabad, Gujarat – 380054<br>📱 +91 98765 43210</div>
+            <div class="address-actions">
+              <button class="addr-btn primary">Edit</button>
+              <button class="addr-btn">Delete</button>
+            </div>
+          </div>
+          <div class="address-card">
+            <div class="address-name">Rahul Sharma (Office)</div>
+            <div class="address-text">Plot 15, GIDC Industrial Area,<br>Vatva, Ahmedabad – 382445<br>📱 +91 91234 56789</div>
+            <div class="address-actions">
+              <button class="addr-btn primary">Edit</button>
+              <button class="addr-btn">Delete</button>
+              <button class="addr-btn">Set Default</button>
+            </div>
+          </div>
+          <div class="add-address-card">
+            <i class="fas fa-plus-circle"></i>
+            <span style="font-weight:600;">Add New Address</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDIT PROFILE -->
+      <div class="acc-panel" id="panel-profile">
+        <div class="panel-title">Edit Profile</div>
+        <div class="profile-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>First Name</label>
+              <input type="text" value="Priya"/>
+            </div>
+            <div class="form-group">
+              <label>Last Name</label>
+              <input type="text" value="Sharma"/>
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" value="priya@email.com"/>
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" value="+91 98765 43210"/>
+            </div>
+            <div class="form-group">
+              <label>Date of Birth</label>
+              <input type="date" value="1995-06-15"/>
+            </div>
+            <div class="form-group">
+              <label>Gender</label>
+              <select>
+                <option selected>Female</option>
+                <option>Male</option>
+                <option>Non-binary</option>
+                <option>Prefer not to say</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label>Bio (optional)</label>
+              <textarea rows="3" style="resize:vertical;">Plant lover & hobby gardener 🌿 Love growing tropical plants!</textarea>
+            </div>
+          </div>
+          <button class="save-btn"><i class="fas fa-save"></i> Save Changes</button>
+        </div>
+      </div>
+
+      <!-- CHANGE PASSWORD -->
+      <div class="acc-panel" id="panel-password">
+        <div class="panel-title">Change Password</div>
+        <div class="profile-form" style="max-width:480px;">
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" placeholder="Enter current password"/>
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" placeholder="Min. 8 characters"/>
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" placeholder="Re-enter new password"/>
+            </div>
+          </div>
+          <button class="save-btn" style="margin-top:24px;"><i class="fas fa-lock"></i> Update Password</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <span class="brand-name">Green<span style="color:var(--green-light)">Shop</span></span>
+        <p>Your one-stop destination for premium, hand-picked plants.</p>
+        <div class="social-links">
+          <button class="social-btn"><i class="fab fa-facebook-f"></i></button>
+          <button class="social-btn"><i class="fab fa-instagram"></i></button>
+          <button class="social-btn"><i class="fab fa-twitter"></i></button>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Quick Links</h5>
+        <ul>
+          <li><a href="{% url 'index' %}">Home</a></li>
+          <li><a href="products.html">Shop All Plants</a></li>
+          <li><a href="blog.html">Plant Care Blog</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Customer Help</h5>
+        <ul>
+          <li><a href="track-order.html">Track My Order</a></li>
+          <li><a href="faq.html">FAQs</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Get In Touch</h5>
+        <div class="footer-contact">
+          <div class="contact-item"><i class="fas fa-phone"></i><span>+91 98765 43210</span></div>
+          <div class="contact-item"><i class="fas fa-envelope"></i><span>hello@greenshop.in</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 GreenShop. All rights reserved. Made with 🌿 in India.</span>
+      <div class="payment-icons">
+        <span class="pay-icon">UPI</span><span class="pay-icon">Razorpay</span><span class="pay-icon">Visa</span><span class="pay-icon">PayTM</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="cart-overlay" id="cartOverlay">
+    <div class="cart-sidebar">
+      <div class="cart-header"><h3>🛒 Your Cart</h3><button class="cart-close" id="cartClose"><i class="fas fa-times"></i></button></div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-footer">
+        <div class="coupon-input"><input type="text" id="couponInput" placeholder="Coupon code..."/><button id="applyCoupon">Apply</button></div>
+        <div class="cart-totals">
+          <div class="total-row"><span>Subtotal</span><span id="cartSubtotal">₹0</span></div>
+          <div class="total-row"><span>Shipping</span><span id="cartShipping">₹0</span></div>
+          <div class="total-row final"><span>Total</span><span id="cartTotal">₹0</span></div>
+        </div>
+        <button class="checkout-btn" onclick="window.location='cart.html'"><i class="fas fa-lock"></i> Proceed to Checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="scroll-top" id="scrollTop"><i class="fas fa-arrow-up"></i></button>
+  <script src="{% static 'js/main.js' %}"></script>
+  <script>
+    function switchPanel(name, el) {
+      document.querySelectorAll('.acc-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.acc-nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('panel-' + name).classList.add('active');
+      if (el) el.classList.add('active');
+    }
+  </script>
+</body>
+</html>
+
+{% endblock %}

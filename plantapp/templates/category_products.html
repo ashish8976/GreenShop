@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block container %}
+<style>
+  .cp-header {
+    background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
+    padding: 40px 5%;
+    position: relative;
+    overflow: hidden;
+  }
+  .cp-header::before {
+    content: '🌿';
+    position: absolute;
+    right: 5%; top: 50%;
+    transform: translateY(-50%);
+    font-size: 100px;
+    opacity: 0.1;
+  }
+  .cp-header h1 {
+    font-family: 'Playfair Display', serif;
+    color: #fff;
+    font-size: clamp(24px, 3.5vw, 38px);
+    margin-bottom: 6px;
+  }
+  .cp-header h1 span { color: #b7f0c8; }
+  .cp-header p { color: #d4f1e0; font-size: 14px; }
+  .cp-breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: #b7f0c8;
+    margin-bottom: 12px;
+    opacity: 0.85;
+  }
+  .cp-breadcrumb a { color: inherit; text-decoration: none; }
+  .cp-breadcrumb a:hover { text-decoration: underline; }
+
+  .cp-body {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 40px 5% 80px;
+  }
+
+  .cp-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .cp-topbar-info h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--green-dark);
+  }
+  .cp-topbar-info h3 span { color: var(--green-light); }
+  .cp-topbar-info p { font-size: 13px; color: var(--text-light); margin-top: 3px; }
+
+  .cp-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none;
+    background: var(--green-bg);
+    color: var(--green-dark);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 18px;
+    border-radius: 30px;
+    border: 1.5px solid var(--green-light);
+    transition: all 0.2s;
+  }
+  .cp-back-btn:hover {
+    background: var(--green-mid);
+    color: #fff;
+    border-color: var(--green-mid);
+  }
+
+  /* Product Grid */
+  .cp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 22px;
+  }
+
+  .cp-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    text-decoration: none;
+    display: block;
+    transition: transform 0.25s, box-shadow 0.25s;
+    animation: fadeUp 0.35s ease both;
+  }
+  .cp-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 40px rgba(26,60,46,0.13);
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .cp-card-img {
+    width: 100%; height: 200px;
+    object-fit: cover; display: block;
+  }
+  .cp-card-no-img {
+    width: 100%; height: 200px;
+    background: var(--green-bg);
+    display: flex; align-items: center;
+    justify-content: center; font-size: 64px;
+  }
+  .cp-card-body { padding: 14px 16px 18px; }
+  .cp-card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px; font-weight: 700;
+    color: var(--green-dark);
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cp-card-price {
+    color: var(--green-mid);
+    font-weight: 700; font-size: 16px;
+  }
+  .cp-card-old {
+    font-size: 12px; color: var(--text-light);
+    text-decoration: line-through; margin-left: 6px;
+  }
+  .cp-card-badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 700;
+    background: #e8f5e9; color: var(--green-mid);
+    padding: 3px 10px; border-radius: 20px;
+    margin-bottom: 8px;
+  }
+
+  /* Empty state */
+  .cp-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+    background: #fff;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+  }
+  .cp-empty .ei { font-size: 72px; margin-bottom: 16px; }
+  .cp-empty h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--green-dark); font-size: 22px; margin-bottom: 8px;
+  }
+  .cp-empty p { color: var(--text-light); font-size: 15px; margin-bottom: 20px; }
+  .cp-empty a {
+    display: inline-block;
+    background: var(--green-mid); color: #fff;
+    padding: 10px 24px; border-radius: 30px;
+    text-decoration: none; font-weight: 600; font-size: 14px;
+  }
+
+  @media (max-width: 600px) {
+    .cp-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  }
+</style>
+
+<!-- PAGE HEADER -->
+<div class="cp-header">
+  <div class="cp-breadcrumb">
+    <a href="{% url 'index' %}">Home</a>
+    <span>›</span>
+    <a href="{% url 'category' %}">Categories</a>
+    <span>›</span>
+    <span>{{ selected_category.name }}</span>
+  </div>
+  <h1>{{ selected_category.name }} <span></span></h1>
+  <p>{{ products|length }} product{{ products|length|pluralize }} available</p>
+</div>
+
+<!-- MAIN BODY -->
+<div class="cp-body">
+
+  <div class="cp-topbar">
+    <div class="cp-topbar-info">
+      <h3>All <span>{{ selected_category.name }}</span></h3>
+      <p>
+        {% if products %}
+          {{ products|length }} product{{ products|length|pluralize }} found
+        {% else %}
+          No products available
+        {% endif %}
+      </p>
+    </div>
+    <a href="{% url 'category' %}" class="cp-back-btn">
+      <i class="fas fa-arrow-left"></i> Back to Categories
+    </a>
+  </div>
+
+  <div class="cp-grid">
+    {% if products %}
+      {% for p in products %}
+        <a href="{% url 'product_details' p.id %}"
+           class="cp-card"
+           style="animation-delay: {{ forloop.counter0 }}0ms;">
+
+          {% with p.sizes.first as size %}
+            {% if size %}
+              {% with size.images.first as img %}
+                {% if img %}
+                  <img src="{{ img.image.url }}" alt="{{ p.name }}" class="cp-card-img">
+                {% else %}
+                  <div class="cp-card-no-img">🌿</div>
+                {% endif %}
+              {% endwith %}
+            {% else %}
+              <div class="cp-card-no-img">🌿</div>
+            {% endif %}
+          {% endwith %}
+
+          <div class="cp-card-body">
+            {% if p.badge_text %}
+              <div class="cp-card-badge">{{ p.badge_text }}</div>
+            {% endif %}
+            <div class="cp-card-name">{{ p.name }}</div>
+            {% with p.sizes.first.variants.first as v %}
+              {% if v %}
+                <div>
+                  <span class="cp-card-price">₹{{ v.price }}</span>
+                  {% if v.old_price %}
+                    <span class="cp-card-old">₹{{ v.old_price }}</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            {% endwith %}
+          </div>
+        </a>
+      {% endfor %}
+
+    {% else %}
+      <div class="cp-empty">
+        <div class="ei">🌱</div>
+        <h3>No Plants Available</h3>
+        <p>"{{ selected_category.name }}" category mein abhi koi product nahi hai.</p>
+        <a href="{% url 'category' %}">← Back to Categories</a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  const scrollTopBtn = document.getElementById('scrollTop');
+  window.addEventListener('scroll', () => {
+    scrollTopBtn?.classList.toggle('visible', window.scrollY > 400);
+  });
+  scrollTopBtn?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+</script>
+
+{% endblock %}
