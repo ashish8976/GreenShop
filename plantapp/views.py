@@ -197,11 +197,80 @@ def category_products(request, cat_id):
     })
 
 def account(request):
-    if not request.session.get('useremail'):
-        return redirect('login')
-    
-    user = User.objects.get(email = request.session['useremail'])
-    return render(request,'account.html', {'user':user})
+    user = User.objects.get(email= request.session['useremail'])
+    msg = ""
+
+    # DASHBOARD
+  
+    # MANAGE ORDERS
+
+    # WISHLIST
+
+    # ADDRESS
+
+    # PROFILE IMAGE UPDATE
+    if request.method == "POST" and request.FILES.get('user_image'):
+        user.user_image = request.FILES.get('user_image')
+        user.save()
+
+        return redirect('account')
+
+    # PROFILE UPDATE
+    if request.method == "POST" and 'update_profile' in request.POST:
+        try:
+
+            user.fname = request.POST.get('fname')
+            user.lname = request.POST.get('lname')
+            user.phone_number = request.POST.get('phone_number')
+            user.bio = request.POST.get('bio')
+
+            user.save()
+
+            message = "Profile Updated Successfully"
+            return render(request, 'account.html', {
+                    'message':message,
+                    'user' : user,
+                    'active_panel' : 'profile',
+                })
+        except:
+            message = "Something Problem"
+            return render(request, 'account.html', {
+                    'message':message,
+                    'user' : user,
+                    'active_panel' : 'profile',
+                })
+        
+
+    # CHANGE PASSWORD
+    if request.method == "POST" and 'update_password' in request.POST:
+        if check_password(request.POST['oldpassword'],user.password):
+            if request.POST['newpassword']==request.POST['cpassword']:
+                user.password = make_password(request.POST['newpassword'])
+                user.save()
+                msg = "Password Updated Successfully !!"
+                return render(request,'login.html', {'msg':msg})
+            else:
+                msg = "New Password and Confirm Password is not match"
+                return render(request, 'account.html', {
+                    'msg':msg,
+                    'user' : user,
+                    'active_panel' : 'password',
+                })
+        else:
+            msg = "Current password is not match"
+            return render(request,'account.html',{ 
+                'msg': msg,
+                'user' : user,
+                'active_panel' : 'password',
+            })
+        
+        
+    context = {
+        'user': user,
+        'msg': msg,
+    }
+
+    return render(request, 'account.html', context)
 
 
 

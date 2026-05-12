@@ -3,6 +3,110 @@
 {% block container %}
   
   <style>
+
+    .crop-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+}
+
+.crop-box{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    width:90%;
+    max-width:500px;
+}
+
+.crop-box img{
+    max-width:100%;
+    display:block;
+}
+
+.crop-actions{
+    margin-top:15px;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+}
+
+.crop-actions button{
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.crop-save{
+    background:green;
+    color:white;
+}
+
+.crop-cancel{
+    background:#ddd;
+}
+
+    .profile-avatar-wrapper{
+    position:relative;
+    width:80px;
+    margin:0 auto 16px;
+}
+
+.profile-avatar{
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    overflow:hidden;
+    background:var(--green-light);
+    border:3px solid rgba(255,255,255,0.3);
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:32px;
+    color:white;
+}
+
+.profile-avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.camera-icon{
+    position:absolute;
+    bottom:0;
+    right:0;
+
+    width:28px;
+    height:28px;
+
+    background:white;
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    cursor:pointer;
+
+    color:var(--green-dark);
+    font-size:12px;
+
+    border:2px solid var(--green-light);
+
+    transition:0.3s;
+}
+
+.camera-icon:hover{
+    background:var(--green-light);
+    color:white;
+}
     .account-layout { display:grid; grid-template-columns:280px 1fr; gap:32px; padding:60px 6%; }
     .account-sidebar { background:var(--white); border-radius:var(--radius); border:1.5px solid var(--border); padding:0; overflow:hidden; height:fit-content; position:sticky; top:100px; }
     .account-profile { background:linear-gradient(135deg,var(--green-dark),var(--green-mid)); padding:32px 24px; text-align:center; }
@@ -64,6 +168,27 @@
     @media(max-width:700px){ .form-grid{grid-template-columns:1fr;} .address-grid{grid-template-columns:1fr;} .wish-mini-grid{grid-template-columns:repeat(2,1fr);} .table-head,.table-row{grid-template-columns:1fr 1fr 1fr;} .table-head span:nth-child(4),.table-head span:nth-child(5),.table-row span:nth-child(4),.table-row span:last-child{display:none;} }
   </style>
 </head>
+<!-- Crop Modal -->
+<div class="crop-modal" id="cropModal">
+
+    <div class="crop-box">
+
+        <img id="cropImage">
+
+        <div class="crop-actions">
+            <button type="button" class="crop-cancel"
+                onclick="document.getElementById('cropModal').style.display='none'">
+                Cancel
+            </button>
+
+            <button type="button" class="crop-save" id="cropBtn">
+                Crop & Upload
+            </button>
+        </div>
+
+    </div>
+
+</div>
 <body>
 
   <div class="page-header">
@@ -80,7 +205,34 @@
     <!-- SIDEBAR -->
     <aside class="account-sidebar">
       <div class="account-profile">
-        <div class="profile-avatar">🌿</div>
+    
+        <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+            <div class="profile-avatar-wrapper">
+
+                 <div class="profile-avatar">
+
+                    {% if user.user_image %}
+                        <img src="{{ user.user_image.url }}" alt="Profile">
+                       {% else %}
+                        🌿
+                      {% endif %}
+
+                  </div>
+
+                  <label for="profile-upload" class="camera-icon">
+                         <i class="fas fa-camera"></i>
+                  </label>
+
+                      <input 
+                           type="file"
+                                id="profile-upload"
+                                     name="user_image"
+                                         hidden >
+              </div>
+        </form>
+      
         <div class="profile-name">{{user.fname}} {{user.lname}}</div>
         <div class="profile-email">{{user.email}}</div>
       </div>
@@ -104,7 +256,10 @@
           <i class="fas fa-lock"></i> Change Password
         </div>
         <div class="acc-nav-item" style="color:#e63946;border-top:1px solid var(--border);margin-top:8px;">
-          <i class="fas fa-sign-out-alt" style="color:#e63946"></i> Sign Out
+          <a href="{% url 'logout' %}" class="acc-nav-item" style="color:#e63946;border-top:1px solid var(--border);margin-top:8px;text-decoration:none;">
+            <i class="fas fa-sign-out-alt" style="color:#e63946"></i>
+             Sign Out
+          </a>
         </div>
       </nav>
     </aside>
@@ -113,7 +268,7 @@
     <div class="account-main">
 
       <!-- DASHBOARD -->
-      <div class="acc-panel active" id="panel-dashboard">
+      <div class="acc-panel {% if active_panel == 'dashboard' or not active_panel %}active{% endif %}" id="panel-dashboard">
         <div class="panel-title">Welcome back, {{user.fname}} {{user.lname}} 🌿</div>
         <div class="dash-stats">
           <div class="dash-stat">
@@ -160,7 +315,7 @@
       </div>
 
       <!-- ORDERS -->
-      <div class="acc-panel" id="panel-orders">
+      <div class="acc-panel {% if active_panel == 'orders' %}active{% endif %}" id="panel-orders">
         <div class="panel-title">My Orders</div>
         <div class="recent-orders">
           <div class="table-head">
@@ -209,31 +364,9 @@
       </div>
 
       <!-- WISHLIST -->
-      <div class="acc-panel" id="panel-wishlist">
+      <div class="acc-panel {% if active_panel == 'wishlist' %}active{% endif %}" id="panel-wishlist">
         <div class="panel-title">My Wishlist</div>
         <div class="wish-mini-grid">
-          <div class="wishlist-card" style="background:var(--white);border-radius:var(--radius);border:1.5px solid var(--border);overflow:hidden;">
-            <div style="background:var(--green-bg);height:140px;display:flex;align-items:center;justify-content:center;font-size:60px;">🌿</div>
-            <div style="padding:16px;">
-              <div style="font-size:12px;color:var(--green-light);font-weight:600;margin-bottom:4px;">Indoor Plant</div>
-              <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--green-dark);margin-bottom:10px;">Monstera Deliciosa</div>
-              <div style="display:flex;align-items:center;justify-content:space-between;">
-                <span style="font-weight:700;color:var(--green-dark);">₹649</span>
-                <button class="view-order-btn" onclick="addToCart(1,'Monstera',649,'🌿')">Add to Cart</button>
-              </div>
-            </div>
-          </div>
-          <div class="wishlist-card" style="background:var(--white);border-radius:var(--radius);border:1.5px solid var(--border);overflow:hidden;">
-            <div style="background:var(--green-bg);height:140px;display:flex;align-items:center;justify-content:center;font-size:60px;">🌸</div>
-            <div style="padding:16px;">
-              <div style="font-size:12px;color:var(--green-light);font-weight:600;margin-bottom:4px;">Flowering</div>
-              <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--green-dark);margin-bottom:10px;">Peace Lily</div>
-              <div style="display:flex;align-items:center;justify-content:space-between;">
-                <span style="font-weight:700;color:var(--green-dark);">₹399</span>
-                <button class="view-order-btn" onclick="addToCart(2,'Peace Lily',399,'🌸')">Add to Cart</button>
-              </div>
-            </div>
-          </div>
           <div class="wishlist-card" style="background:var(--white);border-radius:var(--radius);border:1.5px solid var(--border);overflow:hidden;">
             <div style="background:var(--green-bg);height:140px;display:flex;align-items:center;justify-content:center;font-size:60px;">🌵</div>
             <div style="padding:16px;">
@@ -246,22 +379,13 @@
             </div>
           </div>
         </div>
-        <div style="margin-top:20px;"><a href="wishlist.html" style="color:var(--green-mid);font-weight:600;font-size:14px;">View full wishlist →</a></div>
+        <div style="margin-top:20px;"><a href="{% url 'wishlist' %}" style="color:var(--green-mid);font-weight:600;font-size:14px;">View full wishlist →</a></div>
       </div>
 
       <!-- ADDRESSES -->
-      <div class="acc-panel" id="panel-addresses">
+      <div class="acc-panel {% if active_panel == 'addresses' %}active{% endif %}" id="panel-addresses">
         <div class="panel-title">Saved Addresses</div>
         <div class="address-grid">
-          <div class="address-card default-addr">
-            <span class="default-tag">Default</span>
-            <div class="address-name">Priya Sharma</div>
-            <div class="address-text">42, Shanti Nagar, Near Bodakdev Circle,<br>Ahmedabad, Gujarat – 380054<br>📱 +91 98765 43210</div>
-            <div class="address-actions">
-              <button class="addr-btn primary">Edit</button>
-              <button class="addr-btn">Delete</button>
-            </div>
-          </div>
           <div class="address-card">
             <div class="address-name">Rahul Sharma (Office)</div>
             <div class="address-text">Plot 15, GIDC Industrial Area,<br>Vatva, Ahmedabad – 382445<br>📱 +91 91234 56789</div>
@@ -279,69 +403,74 @@
       </div>
 
       <!-- EDIT PROFILE -->
-      <div class="acc-panel" id="panel-profile">
+      <form method="POST"  enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="acc-panel {% if active_panel == 'profile' %}active{% endif %}" id="panel-profile">
         <div class="panel-title">Edit Profile</div>
         <div class="profile-form">
+          {% if message %}
+                  <p style="color:red;font-weight:600;margin-bottom:15px;">
+                     {{message}}
+                        </p>
+                    {% endif %}
+              
           <div class="form-grid">
             <div class="form-group">
               <label>First Name</label>
-              <input type="text" value="Priya"/>
+              <input type="text" value="{{user.fname}}" name="fname">
             </div>
             <div class="form-group">
               <label>Last Name</label>
-              <input type="text" value="Sharma"/>
+              <input type="text" value="{{user.lname}}" name="lname"/>
             </div>
             <div class="form-group">
               <label>Email Address</label>
-              <input type="email" value="priya@email.com"/>
+              <input type="email" value="{{user.email}}" name="email" readonly/>
             </div>
             <div class="form-group">
               <label>Phone Number</label>
-              <input type="tel" value="+91 98765 43210"/>
+              <input type="tel" value="{{user.phone_number}}" name="phone_number"/>
             </div>
-            <div class="form-group">
-              <label>Date of Birth</label>
-              <input type="date" value="1995-06-15"/>
-            </div>
-            <div class="form-group">
-              <label>Gender</label>
-              <select>
-                <option selected>Female</option>
-                <option>Male</option>
-                <option>Non-binary</option>
-                <option>Prefer not to say</option>
-              </select>
-            </div>
+            
             <div class="form-group full">
-              <label>Bio (optional)</label>
-              <textarea rows="3" style="resize:vertical;">Plant lover & hobby gardener 🌿 Love growing tropical plants!</textarea>
+              <label>Bio</label>
+              <textarea rows="3" style="resize:vertical;"  name="bio">{{user.bio}} </textarea>
             </div>
           </div>
-          <button class="save-btn"><i class="fas fa-save"></i> Save Changes</button>
+          <button class="save-btn" type="submit" name="update_profile"><i class="fas fa-save"></i> Save Changes</button>
         </div>
       </div>
+    </form>
 
       <!-- CHANGE PASSWORD -->
-      <div class="acc-panel" id="panel-password">
-        <div class="panel-title">Change Password</div>
-        <div class="profile-form" style="max-width:480px;">
-          <div style="display:flex;flex-direction:column;gap:20px;">
-            <div class="form-group">
-              <label>Current Password</label>
-              <input type="password" placeholder="Enter current password"/>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="acc-panel {% if active_panel == 'password' %}active{% endif %}" id="panel-password">
+         <div class="panel-title">Change Password</div>
+          <div class="profile-form" style="max-width:480px;">
+            {% if msg %}
+                  <p style="color:red;font-weight:600;margin-bottom:15px;">
+                     {{msg}}
+                        </p>
+                    {% endif %}
+            <div style="display:flex;flex-direction:column;gap:20px;">
+              <div class="form-group">
+               <label>Current Password</label>
+                <input type="password" placeholder="Enter current password" name="oldpassword"/>
+              </div>
+              <div class="form-group">
+               <label>New Password</label>
+               <input type="password" placeholder="Min. 8 characters" name="newpassword"/>
+              </div>
+              <div class="form-group">
+               <label>Confirm New Password</label>
+               <input type="password" placeholder="Re-enter new password" name="cpassword"/>
+              </div>
             </div>
-            <div class="form-group">
-              <label>New Password</label>
-              <input type="password" placeholder="Min. 8 characters"/>
-            </div>
-            <div class="form-group">
-              <label>Confirm New Password</label>
-              <input type="password" placeholder="Re-enter new password"/>
-            </div>
-          </div>
-          <button class="save-btn" style="margin-top:24px;"><i class="fas fa-lock"></i> Update Password</button>
+             <button class="save-btn" type="submit" name="update_password" style="margin-top:24px;"><i class="fas fa-lock"></i> Update Password</button>
+         </div>
         </div>
-      </div>
+      </form>
 
     </div>
   </div>
@@ -361,8 +490,7 @@
         <h5>Quick Links</h5>
         <ul>
           <li><a href="{% url 'index' %}">Home</a></li>
-          <li><a href="products.html">Shop All Plants</a></li>
-          <li><a href="blog.html">Plant Care Blog</a></li>
+          <li><a href="{% url 'products' %}">Shop All Plants</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -407,14 +535,83 @@
 
   <button class="scroll-top" id="scrollTop"><i class="fas fa-arrow-up"></i></button>
   <script src="{% static 'js/main.js' %}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <script>
-    function switchPanel(name, el) {
-      document.querySelectorAll('.acc-panel').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.acc-nav-item').forEach(n => n.classList.remove('active'));
-      document.getElementById('panel-' + name).classList.add('active');
-      if (el) el.classList.add('active');
+
+function switchPanel(name, el) {
+    document.querySelectorAll('.acc-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.acc-nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    if (el) el.classList.add('active');
+}
+
+
+let cropper;
+const input = document.getElementById('profile-upload');
+const image = document.getElementById('cropImage');
+const modal = document.getElementById('cropModal');
+
+input.addEventListener('change', function(e){
+
+    const file = e.target.files[0];
+
+    if(file){
+
+        const reader = new FileReader();
+
+        reader.onload = function(event){
+
+            image.src = event.target.result;
+
+            modal.style.display = 'flex';
+
+            if(cropper){
+                cropper.destroy();
+            }
+
+            cropper = new Cropper(image, {
+                aspectRatio: 1,
+                viewMode: 1,
+                preview: '.profile-avatar'
+            });
+
+        }
+
+        reader.readAsDataURL(file);
     }
-  </script>
+
+});
+
+document.getElementById('cropBtn').addEventListener('click', function(){
+
+    const canvas = cropper.getCroppedCanvas({
+        width:300,
+        height:300
+    });
+
+    canvas.toBlob(function(blob){
+
+        const file = new File([blob], "profile.png", {
+            type: "image/png"
+        });
+
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+
+        input.files = dataTransfer.files;
+
+        document.querySelector('.profile-avatar').innerHTML =
+        `<img src="${canvas.toDataURL()}" alt="Profile">`;
+
+        modal.style.display = 'none';
+
+        input.form.submit();
+
+    });
+
+});
+
+</script>
 </body>
 </html>
 

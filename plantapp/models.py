@@ -7,18 +7,26 @@ class User(models.Model):
     email = models.EmailField()
     phone_number = models.CharField(max_length=10)
     password = models.CharField(max_length=255)
-    bio = models.CharField(max_length=255, null=True)
-    state = models.CharField(max_length=50, null=True)
-    city = models.CharField(max_length=50, null=True)
-    address = models.CharField(max_length=255,null=True)
-    pincode = models.IntegerField(null=True)
-    landmark = models.CharField(null=True)
+    bio = models.TextField(null=True)
+    user_image = models.ImageField(upload_to='user_image/', null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.fname} {self.lname}"
+    
+class Address(models.Model):
+    address = models.TextField(null=True, blank=True)
+    state = models.CharField(max_length=255,null=True,blank=True)
+    city = models.CharField(max_length=255,null=True,blank=True)
+    landmark = models.CharField(max_length=100, null=True,blank=True)
+    address_type = models.CharField(max_length=100, null=True, blank=True)
+    instruction = models.TextField(null=True , blank=True)
+    pincode = models.IntegerField()
+
+    def __str__(self):
+        return self.address
 
 class Category(models.Model):
     name       = models.CharField(max_length=100)
